@@ -1,0 +1,1166 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="스냅사진 레퍼런스를 6개 컨셉으로 나눠 친구와 함께 모으는 웹 보드 Reference의 제품 요구사항(v0.2)과 디자인 명세.">
+<meta property="og:title" content="Reference — PRD & 디자인 명세">
+<meta property="og:description" content="스냅사진 레퍼런스를 6개 컨셉으로 나눠 친구와 함께 모으는 웹 보드의 기획 문서.">
+<meta property="og:type" content="article">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#128204;</text></svg>">
+<style>
+  :root{color-scheme:light dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  body{margin:0;font:14px system-ui,-apple-system,sans-serif;background:#f7f7f5}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+</style>
+<title>Reference PRD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@200;300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --ground:#F1F5FC;
+    --paper:#FFFFFF;
+    --wash:#EFF6FF;
+    --ink:#0F1A2E;
+    --ink-soft:#4A5A73;
+    --ink-faint:#7C8CA6;
+    --line:#BFDBFE;
+    --line-soft:#E2EAF7;
+    --accent:#2563EB;
+    --accent-deep:#1447CC;
+    --on-accent:#FFFFFF;
+
+    --f-sans:"IBM Plex Sans KR","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+    --f-mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0A101B; --paper:#131C2B; --wash:#17263D;
+      --ink:#E7EDF8; --ink-soft:#A7B5CB; --ink-faint:#74869F;
+      --line:#28374F; --line-soft:#1D2839;
+      --accent:#6D9DFF; --accent-deep:#A3C4FF; --on-accent:#0A101B;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0A101B; --paper:#131C2B; --wash:#17263D;
+    --ink:#E7EDF8; --ink-soft:#A7B5CB; --ink-faint:#74869F;
+    --line:#28374F; --line-soft:#1D2839;
+    --accent:#6D9DFF; --accent-deep:#A3C4FF; --on-accent:#0A101B;
+  }
+
+  body{background:var(--ground);color:var(--ink);font-family:var(--f-sans);font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  ::selection{background:var(--accent);color:var(--on-accent);}
+  a{color:var(--accent-deep);}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px;}
+
+  .shell{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:0 96px;display:grid;grid-template-columns:1fr;gap:0;}
+
+  /* masthead */
+  .masthead{grid-column:1/-1;padding-block:56px 32px;border-bottom:2px solid var(--ink);}
+  .eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:500;margin:0 0 14px;}
+  .masthead h1{font-size:clamp(38px,7vw,62px);line-height:1.02;letter-spacing:-.03em;font-weight:700;margin:0;color:var(--accent-deep);text-wrap:balance;}
+  .masthead h1 em{font-style:normal;color:var(--ink);font-weight:300;display:block;font-size:clamp(17px,2.6vw,24px);letter-spacing:-.01em;margin-top:14px;max-width:34ch;line-height:1.5;}
+  .specs{margin:32px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);}
+  .spec{background:var(--paper);padding:14px 16px;}
+  .spec dt{font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 4px;}
+  .spec dd{margin:0;font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;}
+  .changelog{
+    margin:20px 0 0;background:var(--wash);border-left:3px solid var(--accent);
+    padding:14px 18px;font-size:14px;color:var(--ink-soft);max-width:none;
+  }
+  .changelog b{color:var(--ink);}
+
+  @media (min-width:980px){
+    .shell{grid-template-columns:212px minmax(0,1fr);column-gap:56px;}
+    .masthead{grid-column:1/-1;}
+    .toc{grid-column:1;}
+    main{grid-column:2;}
+  }
+
+  .toc{padding-block:36px;align-self:start;}
+  @media (min-width:980px){.toc{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 28px);max-height:calc(100vh - 80px);overflow-y:auto;}}
+  .toc h2{font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:500;margin:0 0 10px;}
+  .toc h2 + ol{margin-bottom:22px;}
+  .toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px;}
+  .toc a{display:grid;grid-template-columns:26px 1fr;gap:6px;align-items:baseline;text-decoration:none;color:var(--ink-soft);font-size:13.5px;padding:5px 8px 5px 10px;border-left:2px solid transparent;transition:color .15s, border-color .15s;}
+  .toc a span{font-family:var(--f-mono);font-size:11px;color:var(--ink-faint);}
+  .toc a:hover{color:var(--accent-deep);}
+  .toc a.on{color:var(--accent-deep);font-weight:600;border-left-color:var(--accent);}
+  .toc a.on span{color:var(--accent);}
+
+  main{padding-block:36px 0;display:flex;flex-direction:column;gap:64px;min-width:0;}
+
+  /* part divider */
+  .part{
+    display:flex;flex-direction:column;gap:8px;
+    border-top:3px solid var(--accent);padding-top:18px;margin-top:16px;
+  }
+  .part .pnum{font-family:var(--f-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600;}
+  .part h2{margin:0;font-size:clamp(28px,5vw,40px);letter-spacing:-.025em;font-weight:700;line-height:1.15;color:var(--accent-deep);}
+  .part p{font-size:15px;}
+
+  section{scroll-margin-top:24px;display:flex;flex-direction:column;gap:20px;}
+  .shead{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--ink);padding-top:14px;}
+  .shead .num{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--accent);font-weight:600;}
+  .shead h3{margin:0;font-size:clamp(23px,3.6vw,30px);letter-spacing:-.02em;font-weight:600;line-height:1.25;color:var(--ink);text-wrap:balance;}
+  h4{margin:0;font-size:16px;font-weight:600;letter-spacing:-.01em;color:var(--accent-deep);}
+  h4 .kicker{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--ink-faint);font-weight:500;margin-right:8px;}
+  p{margin:0;max-width:66ch;color:var(--ink-soft);}
+  p strong{color:var(--ink);font-weight:600;}
+  .lead{color:var(--ink);font-size:16px;}
+  .block{display:flex;flex-direction:column;gap:14px;}
+
+  ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;max-width:66ch;}
+  ul.plain li{display:grid;grid-template-columns:20px 1fr;gap:10px;color:var(--ink-soft);}
+  ul.plain li::before{content:"";width:6px;height:6px;margin-top:11px;margin-left:5px;background:var(--accent);border-radius:1px;}
+
+  ol.rules{margin:0;padding:0;list-style:none;counter-reset:r;display:flex;flex-direction:column;gap:12px;max-width:68ch;}
+  ol.rules li{counter-increment:r;display:grid;grid-template-columns:26px 1fr;gap:12px;color:var(--ink-soft);}
+  ol.rules li::before{content:counter(r);font-family:var(--f-mono);font-size:11px;font-weight:600;color:var(--accent);padding-top:5px;}
+  ol.rules b{color:var(--ink);}
+
+  .tw{overflow-x:auto;border:1px solid var(--line-soft);background:var(--paper);}
+  table{border-collapse:collapse;width:100%;min-width:520px;font-size:13.5px;line-height:1.6;}
+  thead th{background:var(--accent);color:var(--on-accent);font-weight:600;text-align:left;padding:10px 14px;font-size:12px;letter-spacing:.02em;white-space:nowrap;}
+  tbody td,tbody th{padding:11px 14px;border-top:1px solid var(--line-soft);vertical-align:top;color:var(--ink-soft);text-align:left;font-weight:400;}
+  tbody th{color:var(--ink);font-weight:600;white-space:nowrap;}
+  tbody tr:nth-child(even) td,tbody tr:nth-child(even) th{background:var(--wash);}
+  td.num,th.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12px;}
+  td.new,th.new{position:relative;}
+  .newmark{display:inline-block;font-family:var(--f-mono);font-size:9px;letter-spacing:.1em;color:var(--on-accent);background:var(--accent);padding:1px 5px;border-radius:2px;margin-right:6px;vertical-align:2px;}
+
+  .personas{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));}
+  .persona{background:var(--paper);border:1px solid var(--line-soft);border-top:3px solid var(--accent);padding:20px;display:flex;flex-direction:column;gap:14px;}
+  .persona header{display:flex;flex-direction:column;gap:2px;}
+  .persona .tag{font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);}
+  .persona h5{margin:0;font-size:18px;font-weight:600;letter-spacing:-.01em;color:var(--ink);}
+  .persona dl{margin:0;display:flex;flex-direction:column;gap:11px;}
+  .persona dt{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:2px;}
+  .persona dd{margin:0;color:var(--ink-soft);font-size:14px;line-height:1.65;}
+
+  .flow{display:flex;flex-direction:column;gap:12px;}
+  .step{background:var(--paper);border:1px solid var(--line-soft);display:grid;grid-template-columns:1fr;gap:12px;padding:14px 16px;}
+  @media (min-width:640px){.step{grid-template-columns:54px 1fr 1fr;gap:18px;align-items:start;}}
+  .step .code{font-family:var(--f-mono);font-size:12px;font-weight:600;color:var(--accent);letter-spacing:.04em;padding-top:1px;}
+  .cell{display:flex;flex-direction:column;gap:3px;min-width:0;}
+  .cell .lab{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);}
+  .cell .val{font-size:14px;line-height:1.6;color:var(--ink-soft);}
+  .cell.act .val{color:var(--ink);font-weight:500;}
+
+  .pri{display:inline-block;font-family:var(--f-mono);font-size:10.5px;font-weight:600;letter-spacing:.08em;padding:2px 8px;border-radius:2px;white-space:nowrap;}
+  .pri.must{background:var(--accent);color:var(--on-accent);}
+  .pri.nice{background:transparent;color:var(--accent-deep);border:1px solid var(--line);}
+  .assume{display:inline-block;font-family:var(--f-mono);font-size:10px;font-weight:500;letter-spacing:.08em;color:var(--accent-deep);border:1px dashed var(--line);padding:0 5px;border-radius:2px;vertical-align:1px;margin-inline:2px;white-space:nowrap;}
+  .need{display:inline-block;font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--on-accent);background:var(--accent-deep);padding:1px 6px;border-radius:2px;white-space:nowrap;}
+  .strike{text-decoration:line-through;text-decoration-color:var(--line);color:var(--ink-faint);}
+
+  .checkbar{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;font-family:var(--f-mono);font-size:11.5px;letter-spacing:.06em;color:var(--ink-faint);}
+  .checkbar b{color:var(--accent);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+  .checks{display:flex;flex-direction:column;gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);}
+  .checks label{display:grid;grid-template-columns:18px 1fr;gap:12px;align-items:start;background:var(--paper);padding:12px 16px;cursor:pointer;font-size:14px;line-height:1.6;color:var(--ink-soft);}
+  .checks label:hover{background:var(--wash);}
+  .checks input{appearance:none;-webkit-appearance:none;margin:4px 0 0;width:16px;height:16px;border:1.5px solid var(--line);background:var(--paper);border-radius:2px;display:grid;place-content:center;cursor:pointer;flex:none;}
+  .checks input::after{content:"";width:9px;height:5px;border-left:2px solid var(--on-accent);border-bottom:2px solid var(--on-accent);transform:rotate(-45deg) translate(1px,-1px);opacity:0;}
+  .checks input:checked{background:var(--accent);border-color:var(--accent);}
+  .checks input:checked::after{opacity:1;}
+  .checks input:checked + span{color:var(--ink-faint);text-decoration:line-through;text-decoration-color:var(--line);}
+  .checks .n{font-family:var(--f-mono);font-size:11px;color:var(--accent);margin-right:7px;font-style:normal;}
+
+  .note{background:var(--wash);border-left:3px solid var(--accent);padding:14px 18px;font-size:14px;color:var(--ink-soft);max-width:70ch;}
+  .note b{color:var(--ink);}
+
+  .qa{display:flex;flex-direction:column;gap:18px;}
+  .qa .q{background:var(--paper);border:1px solid var(--line-soft);padding:18px 20px;display:flex;flex-direction:column;gap:10px;}
+  .qa .q p{max-width:none;}
+  .qa .q .qt{color:var(--ink);font-weight:600;font-size:15px;}
+  .qa .q .at{border-top:1px dashed var(--line);padding-top:10px;font-size:14px;}
+  .qa .q .at b{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--accent);margin-right:8px;}
+
+  ol.qs{margin:0;padding:0;list-style:none;counter-reset:q;display:flex;flex-direction:column;gap:16px;}
+  ol.qs li{counter-increment:q;display:grid;grid-template-columns:34px 1fr;gap:14px;max-width:70ch;}
+  ol.qs li::before{content:"Q" counter(q);font-family:var(--f-mono);font-size:12px;font-weight:600;color:var(--accent);padding-top:3px;}
+  ol.qs strong{display:block;color:var(--ink);font-weight:600;margin-bottom:3px;}
+  ol.qs span{color:var(--ink-soft);font-size:14px;}
+
+  /* ---------- design-spec specific ---------- */
+  .tree{
+    font-family:var(--f-mono);font-size:12.5px;line-height:1.85;
+    background:var(--paper);border:1px solid var(--line-soft);
+    padding:16px 18px;overflow-x:auto;color:var(--ink-soft);white-space:pre;margin:0;
+  }
+  .tree b{color:var(--accent-deep);font-weight:600;}
+
+  .swatches{display:grid;gap:1px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));background:var(--line-soft);border:1px solid var(--line-soft);}
+  .sw{background:var(--paper);padding:0;display:flex;flex-direction:column;}
+  .sw .chip{height:52px;border-bottom:1px solid var(--line-soft);}
+  .sw .meta{padding:9px 12px;display:flex;flex-direction:column;gap:1px;}
+  .sw .nm{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;color:var(--ink);font-weight:600;}
+  .sw .hx{font-family:var(--f-mono);font-size:10.5px;color:var(--ink-faint);}
+  .sw .use{font-size:11.5px;color:var(--ink-soft);line-height:1.45;margin-top:3px;}
+
+  /* product preview — fixed product palette, intentionally theme-independent */
+  .pv{
+    --p-paper:#F2F2F0; --p-ink:#111111; --p-ink60:#6B6B68; --p-ink35:#A5A5A0;
+    --p-line:#DCDCD8; --p-ph:#E6E6E3; --p-live:#2563EB;
+    background:var(--p-paper);color:var(--p-ink);
+    border:1px solid var(--line-soft);
+    padding:22px 20px;overflow-x:auto;
+  }
+  .pvcap{
+    font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ink-faint);margin:0 0 -6px;
+  }
+  .pv .bar{
+    display:flex;align-items:center;justify-content:space-between;
+    font-size:10px;letter-spacing:.10em;color:var(--p-ink);font-weight:500;
+    padding-bottom:16px;
+  }
+  .pv .bar .nav{display:flex;gap:13px;color:var(--p-ink60);font-size:10px;letter-spacing:.04em;}
+  .pv .bar .nav .cur{color:var(--p-ink);border-bottom:1px solid var(--p-ink);padding-bottom:1px;}
+  .pv .bar .who{color:var(--p-ink60);font-size:10px;letter-spacing:.04em;display:flex;gap:9px;align-items:center;}
+  .dot{width:4px;height:4px;background:var(--p-live);border-radius:50%;display:inline-block;flex:none;}
+  .pv .hero{text-align:center;padding:26px 0 6px;}
+  .pv .hero .t{
+    font-size:clamp(26px,5.6vw,50px);font-weight:200;letter-spacing:.085em;
+    color:var(--p-ink);line-height:1.05;margin:0;white-space:nowrap;
+  }
+  .pv .hero .m{font-size:10px;letter-spacing:.10em;color:var(--p-ink60);margin:9px 0 0;}
+  .pv .strip{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:22px;}
+  .pv .cat .ph{aspect-ratio:3/4;background:var(--p-ph);}
+  .pv .cat .lb{display:flex;align-items:baseline;gap:5px;margin-top:7px;flex-wrap:wrap;}
+  .pv .cat .lb .n{font-size:10.5px;color:var(--p-ink);letter-spacing:-.01em;}
+  .pv .cat .lb .c{font-family:var(--f-mono);font-size:9px;color:var(--p-ink60);}
+  .pv .slider{display:flex;justify-content:center;align-items:center;margin-top:20px;}
+  .pv .slider .trk{width:150px;height:1px;background:var(--p-line);position:relative;}
+  .pv .slider .hd{position:absolute;left:28%;top:-4px;width:9px;height:9px;border-radius:50%;background:#fff;border:1px solid var(--p-ink);}
+
+  .pv .ttl{display:flex;align-items:baseline;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--p-line);}
+  .pv .ttl .l{display:flex;align-items:baseline;gap:8px;}
+  .pv .ttl .l .h{font-size:20px;font-weight:300;letter-spacing:.02em;}
+  .pv .ttl .l .c{font-family:var(--f-mono);font-size:10px;color:var(--p-ink60);}
+  .pv .ttl .r{font-size:11px;color:var(--p-ink);}
+  .pv .chips{display:flex;gap:16px;padding:12px 0 18px;font-size:11px;color:var(--p-ink60);flex-wrap:wrap;}
+  .pv .chips .cur{color:var(--p-ink);border-bottom:1px solid var(--p-ink);padding-bottom:2px;}
+  .pv .chips .add{color:var(--p-ink35);}
+  .pv .row{display:flex;gap:9px;margin-bottom:9px;}
+  .pv .row > i{background:var(--p-ph);display:block;}
+  .pv .row > i.live{outline:1px solid var(--p-live);outline-offset:-1px;}
+  .pv .legend{font-size:10.5px;color:var(--p-ink60);margin:10px 0 0;display:flex;gap:7px;align-items:center;}
+
+  .verdict{grid-column:1/-1;margin-top:72px;background:var(--accent-deep);color:#FFFFFF;padding:clamp(28px,5vw,48px);display:flex;flex-direction:column;gap:14px;}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .verdict{background:#1B2E52;}}
+  :root[data-theme="dark"] .verdict{background:#1B2E52;}
+  .verdict .lbl{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#BFDBFE;}
+  .verdict p{color:#FFFFFF;margin:0;max-width:30ch;font-size:clamp(20px,3.4vw,29px);line-height:1.4;font-weight:600;letter-spacing:-.02em;text-wrap:balance;}
+  .verdict .sub{font-size:14.5px;font-weight:400;color:#DBE8FF;max-width:62ch;line-height:1.7;letter-spacing:0;}
+
+  footer{grid-column:1/-1;margin-top:28px;padding-top:16px;border-top:1px solid var(--line-soft);font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;color:var(--ink-faint);display:flex;gap:16px;flex-wrap:wrap;}
+
+  @media (max-width:560px){
+    .pv .strip{grid-template-columns:repeat(3,1fr);gap:8px 8px;row-gap:14px;}
+    .pv .hero .t{white-space:normal;}
+  }
+  @media (prefers-reduced-motion: reduce){*{transition:none !important;animation:none !important;}}
+</style>
+</head>
+<body>
+
+
+<div class="shell">
+
+  <header class="masthead">
+    <p class="eyebrow">제품 요구사항 + 디자인 명세 · v0.2</p>
+    <h1>Reference
+      <em>친구끼리 찾은 스냅사진 레퍼런스를 6개 컨셉으로 나눠 모으고, 서로 실시간으로 확인하는 웹 보드.</em>
+    </h1>
+    <dl class="specs">
+      <div class="spec"><dt>제품명(가칭)</dt><dd>Reference</dd></div>
+      <div class="spec"><dt>문서 버전</dt><dd>PRD v0.2 · 디자인 v0.1</dd></div>
+      <div class="spec"><dt>작성일</dt><dd>2026-09-17</dd></div>
+      <div class="spec"><dt>대상 독자</dt><dd>개발자 · 디자이너</dd></div>
+      <div class="spec"><dt>MVP 목표</dt><dd>1개월 <span class="assume">가정</span></dd></div>
+    </dl>
+    <p class="changelog"><b>v0.2 변경 요약</b> — 분류 체계가 확정되었습니다. <b>카테고리 6개 고정 → 그 안에 사용자가 만드는 폴더</b>로 계층이 정해지면서, v0.1에서 열려 있던 질문 4번("폴더와 카테고리 둘 다 필요한가")이 해소되었습니다. 흐름·기능·완료 기준·범위 제외를 다시 정리했고, <b>디자인 명세(2부)</b>가 새로 붙었습니다.</p>
+  </header>
+
+  <nav class="toc" aria-label="목차">
+    <h2>1부 · PRD</h2>
+    <ol>
+      <li><a href="#s1"><span>01</span>개요</a></li>
+      <li><a href="#s2"><span>02</span>대상 사용자</a></li>
+      <li><a href="#s3"><span>03</span>해결할 문제</a></li>
+      <li><a href="#s4"><span>04</span>사용자 흐름</a></li>
+      <li><a href="#s5"><span>05</span>기능 요구사항</a></li>
+      <li><a href="#s6"><span>06</span>완료 기준</a></li>
+      <li><a href="#s7"><span>07</span>범위 제외</a></li>
+      <li><a href="#s8"><span>08</span>가정과 질문</a></li>
+      <li><a href="#s9"><span>—</span>Review</a></li>
+    </ol>
+    <h2>2부 · 디자인</h2>
+    <ol>
+      <li><a href="#d1"><span>D1</span>디자인 원칙</a></li>
+      <li><a href="#d2"><span>D2</span>화면 구조</a></li>
+      <li><a href="#d3"><span>D3</span>색 · 타이포</a></li>
+      <li><a href="#d4"><span>D4</span>보드 홈</a></li>
+      <li><a href="#d5"><span>D5</span>카테고리 상세</a></li>
+      <li><a href="#d6"><span>D6</span>반응형</a></li>
+      <li><a href="#d7"><span>D7</span>상태와 문구</a></li>
+      <li><a href="#d8"><span>D8</span>개발 참고</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- ============ PART 1 ============ -->
+    <div class="part">
+      <span class="pnum">Part 1</span>
+      <h2>제품 요구사항 (PRD)</h2>
+      <p>무엇을 왜 만드는가. 완료 기준까지.</p>
+    </div>
+
+    <section id="s1">
+      <div class="shead"><span class="num">01</span><h3>개요</h3></div>
+      <p class="lead">지금은 각자 마음에 드는 사진과 링크를 개인 폴더, 카카오톡 대화방, 핀터레스트 보드에 <strong>제각각</strong> 모읍니다.</p>
+      <ul class="plain">
+        <li>상대방이 무엇을 모았는지 <strong>그때그때 볼 수 없습니다.</strong></li>
+        <li>대화방에 올린 이미지는 시간이 지나면 위로 밀려서 <strong>다시 찾기 어렵습니다.</strong></li>
+        <li>"이거 어때?" 같은 의견이 이미지와 따로 놀아, 나중에 보면 <strong>무슨 이야기였는지 모릅니다.</strong></li>
+      </ul>
+      <p>Reference는 <strong>모으는 곳 = 보는 곳 = 이야기하는 곳</strong>을 하나로 합칩니다.</p>
+
+      <div class="block">
+        <h4><span class="kicker">1-1</span>무엇을 모으는가 — 스냅사진 레퍼런스</h4>
+        <p>이 보드는 <strong>촬영 컨셉을 정하기 위한 스냅사진 참고 이미지</strong>를 모읍니다. 그래서 분류 기준을 "아무 이름이나 붙이는 폴더"가 아니라 <strong>실제 촬영 종류 6가지로 처음부터 고정</strong>했습니다. 고를 필요 없이 이미 나뉘어 있어야 저장이 빨라지기 때문입니다.</p>
+        <pre class="tree">보드
+├── 1. <b>개인</b>          ← 카테고리 6개, 고정 (추가·삭제 없음)
+├── 2. <b>커플</b>
+├── 3. <b>친구·우정</b>
+├── 4. <b>일상스냅</b>
+├── 5. <b>셀프웨딩</b>
+└── 6. <b>웨딩스튜디오</b>
+        └── 야외 / 실내 / 필름톤 …   ← 폴더, 사용자가 생성 (1단계까지만)</pre>
+        <ul class="plain">
+          <li><strong>카테고리</strong>는 6개 고정. 이미지 1장은 카테고리 1개에만 속합니다.</li>
+          <li><strong>폴더</strong>는 카테고리 안에서 사용자가 만듭니다. 이미지 1장은 폴더 0~1개에 속합니다.</li>
+          <li>폴더 안에 폴더는 만들 수 없습니다.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="s2">
+      <div class="shead"><span class="num">02</span><h3>대상 사용자</h3></div>
+      <p>주 사용자는 <strong>2~5명 규모의 친한 그룹 하나</strong>입니다. <span class="assume">가정</span></p>
+      <div class="personas">
+        <article class="persona">
+          <header><span class="tag">Persona A · 보드를 만든 사람</span><h5>지훈 (26)</h5></header>
+          <dl>
+            <div><dt>상황</dt><dd>친구와 촬영 컨셉을 잡는 중. 인스타그램·핀터레스트·블로그를 돌며 하루 10~20장을 발견한다.</dd></div>
+            <div><dt>원하는 것</dt><dd>발견한 순간 3초 안에 저장하고, 나중에 "셀프웨딩", "일상스냅"처럼 나눠서 보고 싶다.</dd></div>
+            <div><dt>불편한 점</dt><dd>카톡 "나에게 보내기"에 쌓아두니 며칠 뒤엔 스크롤로 찾을 수가 없다.</dd></div>
+          </dl>
+        </article>
+        <article class="persona">
+          <header><span class="tag">Persona B · 초대받은 사람</span><h5>수아 (27)</h5></header>
+          <dl>
+            <div><dt>상황</dt><dd>앱을 새로 깔거나 회원가입하는 걸 귀찮아한다. 주로 스마트폰으로 본다.</dd></div>
+            <div><dt>원하는 것</dt><dd>링크 하나 눌러 바로 들어가, 지훈이 뭘 올렸는지 훑고 "이건 좀 아닌 듯" 한마디 남기고 싶다.</dd></div>
+            <div><dt>불편한 점</dt><dd>의견 남길 데가 없어 결국 카톡으로 말하는데, 이미지와 연결이 안 돼 대화가 겉돈다.</dd></div>
+          </dl>
+        </article>
+      </div>
+    </section>
+
+    <section id="s3">
+      <div class="shead"><span class="num">03</span><h3>해결할 문제</h3></div>
+      <div class="block">
+        <h4><span class="kicker">3-1</span>문제 상황</h4>
+        <ul class="plain">
+          <li><strong>실시간성 없음</strong> — 물어보기 전엔 친구가 뭘 모았는지 알 수 없다.</li>
+          <li><strong>정리 안 됨</strong> — 대화방 이미지는 시간순으로만 쌓여 컨셉별로 다시 볼 수 없다.</li>
+          <li><strong>링크가 안 보임</strong> — 링크만 공유하면 파란 글씨 하나뿐이라, 열어보기 전엔 뭔지 모른다.</li>
+          <li><strong>의견이 흩어짐</strong> — 이미지는 A에, 그에 대한 반응은 B에 남는다.</li>
+        </ul>
+      </div>
+      <div class="block">
+        <h4><span class="kicker">3-2</span>지금은 어떻게 해결하고 있나</h4>
+        <div class="tw"><table>
+          <thead><tr><th>현재 방법</th><th>되는 것</th><th>안 되는 것</th></tr></thead>
+          <tbody>
+            <tr><th>카카오톡 단톡방</th><td>즉시 공유, 알림</td><td>시간순뿐 · 검색/분류 불가 · 이미지 만료</td></tr>
+            <tr><th>각자 PC 폴더</th><td>정리 잘 됨</td><td>상대방이 볼 수 없음</td></tr>
+            <tr><th>핀터레스트 공유 보드</th><td>이미지 정리</td><td>외부 이미지·링크 넣기 번거로움, 가입 필요</td></tr>
+            <tr><th>구글 드라이브</th><td>파일 공유</td><td>썸네일 보기 불편, 댓글이 이미지와 안 붙음</td></tr>
+          </tbody>
+        </table></div>
+        <div class="note"><b>빈칸:</b> "즉시 공유 + 컨셉별 정리 + 이미지와 링크 모두 + 그 자리에서 댓글"을 한 번에 해주는 도구가 없습니다.</div>
+      </div>
+    </section>
+
+    <section id="s4">
+      <div class="shead"><span class="num">04</span><h3>사용자 흐름</h3></div>
+
+      <div class="block">
+        <h4><span class="kicker">흐름 A</span>보드 만들고 초대하기 · 최초 1회</h4>
+        <div class="flow">
+          <div class="step"><div class="code">A-1</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">첫 화면 — "보드 만들기" 버튼 하나</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">버튼 클릭</span></div></div>
+          <div class="step"><div class="code">A-2</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">이름 입력 창 — 닉네임만, 비밀번호 없음 <span class="assume">가정</span></span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">닉네임 입력 후 시작</span></div></div>
+          <div class="step"><div class="code">A-3</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">빈 보드 + "초대 링크 복사" 버튼</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">링크 복사해 카톡으로 친구에게 전달</span></div></div>
+          <div class="step"><div class="code">A-4</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">(친구 화면) 링크를 열면 닉네임 입력 창</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">닉네임 입력 후 같은 보드에 입장</span></div></div>
+        </div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">흐름 B</span>카테고리 고르기 · 모든 작업의 출발점 <span class="newmark">NEW</span></h4>
+        <div class="flow">
+          <div class="step"><div class="code">B-1</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">보드 홈 — 큰 제목 SNAP REFERENCE + [총 342장]</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">훑어봄</span></div></div>
+          <div class="step"><div class="code">B-2</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">그 아래 6개 카테고리 카드가 한 줄로 배열. 각 카드는 대표 사진 1장 + 이름 + [장수]</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">원하는 컨셉 선택 — 예: "셀프웨딩"</span></div></div>
+          <div class="step"><div class="code">B-3</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">새 사진이 올라온 카테고리는 이름 옆에 파란 점</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">점이 있는 카드를 우선 확인</span></div></div>
+          <div class="step"><div class="code">B-4</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">카테고리 상세 — 사진 그리드 + 폴더 칩 + 사진 올리기</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">여기서 흐름 C·D·E·F로 이어짐</span></div></div>
+        </div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">흐름 C</span>이미지 올리기 · 핵심 흐름</h4>
+        <div class="flow">
+          <div class="step"><div class="code">C-1</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">카테고리 상세 화면 — 예: "셀프웨딩 [52]"</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">(선택) 넣을 폴더 칩을 먼저 클릭</span></div></div>
+          <div class="step"><div class="code">C-2</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">화면 아무 곳</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">이미지 파일을 드래그해 놓기 (또는 ↑ 사진 올리기)</span></div></div>
+          <div class="step"><div class="code">C-3</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">전체 화면 안내 — "여기에 놓으면 [셀프웨딩 · 야외]에 올라갑니다"</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">놓기</span></div></div>
+          <div class="step"><div class="code">C-4</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">그리드 맨 앞에 자리가 먼저 생기고 진행 바 → 완료되면 사진으로 바뀜</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">확인</span></div></div>
+          <div class="step"><div class="code">C-5</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">사진에 올린 사람 닉네임·시간 (마우스를 올리면 보임)</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">— 여기서 "행위 완료"</span></div></div>
+        </div>
+        <div class="note">C-3의 문구에 <b>카테고리와 폴더 이름을 박아 넣는 것</b>이 이 흐름의 핵심입니다. 어디에 올라가는지 놓기 전에 알려주면, 잘못 올려놓고 다시 옮기는 일이 없어집니다.</div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">흐름 D</span>링크 올리기</h4>
+        <div class="flow">
+          <div class="step"><div class="code">D-1</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">카테고리 상세 화면</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">URL 붙여넣기 (Ctrl+V) 또는 링크 입력창에 Enter</span></div></div>
+          <div class="step"><div class="code">D-2</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">제목·설명·대표 이미지를 자동으로 불러온 카드 — OG 태그(웹페이지가 공유용으로 미리 넣어둔 대표 이미지·제목 정보)를 읽어옴</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">확인</span></div></div>
+          <div class="step"><div class="code">D-3</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">추출 실패 시 — 기본 카드 + "이미지 직접 넣기"</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">그대로 저장하거나 이미지 직접 첨부</span></div></div>
+        </div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">흐름 E</span>보고, 말하고, 받기</h4>
+        <div class="flow">
+          <div class="step"><div class="code">E-1</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">친구가 방금 올린 사진이 파란 테두리로 4초간 표시됨</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">사진 클릭</span></div></div>
+          <div class="step"><div class="code">E-2</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">상세 보기 — 원본 크게 + 오른쪽에 업로더·폴더·댓글 + 다운로드</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">댓글 입력 "이거 좋다"</span></div></div>
+          <div class="step"><div class="code">E-3</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">댓글이 오른쪽 패널에 즉시 표시</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">← → 키로 다음 사진 확인</span></div></div>
+          <div class="step"><div class="code">E-4</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">다운로드 버튼</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">클릭 → 원본 이미지가 기기에 저장됨</span></div></div>
+        </div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">흐름 F</span>카테고리 안에서 폴더로 다시 나누기 <span class="newmark">NEW</span></h4>
+        <div class="flow">
+          <div class="step"><div class="code">F-1</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">카테고리 상세 상단의 폴더 칩 행 — 전체 / + 폴더</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">+ 폴더 클릭</span></div></div>
+          <div class="step"><div class="code">F-2</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">그 자리에 바로 입력창이 열림</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">폴더 이름 입력 — 예: "야외", "필름톤" → Enter</span></div></div>
+          <div class="step"><div class="code">F-3</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">칩 행에 새 폴더가 추가됨</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">분류할 사진들을 체크 (또는 드래그로 여러 장 선택)</span></div></div>
+          <div class="step"><div class="code">F-4</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">하단 액션 바 — 12장 선택 · 폴더로 이동 · 다운로드 · 삭제</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">"폴더로 이동" → 폴더 선택</span></div></div>
+          <div class="step"><div class="code">F-5</div>
+            <div class="cell"><span class="lab">보는 화면</span><span class="val">폴더 칩</span></div>
+            <div class="cell act"><span class="lab">하는 행동</span><span class="val">클릭 → 해당 폴더 사진만 표시 (전체로 되돌릴 수 있음)</span></div></div>
+        </div>
+        <div class="note"><b>폴더와 카테고리의 차이 (확정)</b> — <b>카테고리</b>는 6개로 미리 정해진 촬영 종류이며 바꿀 수 없습니다. <b>폴더</b>는 그 안에서 사용자가 직접 만드는 하위 분류입니다. 예: <b>셀프웨딩 &gt; 야외</b>. 한 사진은 카테고리 1개, 폴더 0~1개에 속합니다.</div>
+      </div>
+    </section>
+
+    <section id="s5">
+      <div class="shead"><span class="num">05</span><h3>기능 요구사항</h3></div>
+
+      <div class="block">
+        <h4><span class="kicker">5-1</span>반드시 필요 <span class="pri must">MUST</span> · 20개</h4>
+        <div class="tw"><table>
+          <thead><tr><th>기능명</th><th>설명</th><th class="num">우선순위</th><th class="num">흐름</th></tr></thead>
+          <tbody>
+            <tr><th>보드 생성 &amp; 초대 링크</th><td>보드를 만들면 고유 URL이 생기고, 링크를 아는 사람만 들어올 수 있다</td><td><span class="pri must">MUST</span></td><td class="num">A-1~4</td></tr>
+            <tr><th>간편 참여 (닉네임)</th><td>이메일·비밀번호 없이 닉네임만으로 참여 <span class="assume">가정</span></td><td><span class="pri must">MUST</span></td><td class="num">A-2, A-4</td></tr>
+            <tr><th><span class="newmark">NEW</span>6개 고정 카테고리</th><td>개인 / 커플 / 친구·우정 / 일상스냅 / 셀프웨딩 / 웨딩스튜디오. 보드 홈에 한 줄로 배열</td><td><span class="pri must">MUST</span></td><td class="num">B-2</td></tr>
+            <tr><th><span class="newmark">NEW</span>카테고리 대표 이미지</th><td>각 카드에 최신 업로드 1장을 자동 표시. 비었으면 회색 + [비어 있음]</td><td><span class="pri must">MUST</span></td><td class="num">B-2</td></tr>
+            <tr><th><span class="newmark">NEW</span>카테고리별 장수</th><td>카드 아래 [64] 형태로 현재 장수 표시</td><td><span class="pri must">MUST</span></td><td class="num">B-2</td></tr>
+            <tr><th><span class="newmark">NEW</span>카테고리 상세 진입</th><td>카드 클릭 → 해당 카테고리의 사진 그리드 화면</td><td><span class="pri must">MUST</span></td><td class="num">B-4</td></tr>
+            <tr><th><span class="newmark">NEW</span>폴더 생성/이름변경/삭제</th><td>카테고리 안에서 폴더를 만든다. 폴더를 지워도 사진은 남고 전체로 빠진다</td><td><span class="pri must">MUST</span></td><td class="num">F-1, F-2</td></tr>
+            <tr><th><span class="newmark">NEW</span>폴더 필터</th><td>폴더 칩을 클릭하면 그 폴더 사진만 보인다</td><td><span class="pri must">MUST</span></td><td class="num">F-5</td></tr>
+            <tr><th><span class="newmark">NEW</span>여러 장 선택 → 폴더 이동</th><td>사진을 여러 장 골라 한 번에 폴더로 옮긴다</td><td><span class="pri must">MUST</span></td><td class="num">F-3, F-4</td></tr>
+            <tr><th>이미지 업로드</th><td>드래그 앤 드롭 + 파일 선택. 여러 장 동시 업로드(최대 10장/회 <span class="assume">가정</span>)</td><td><span class="pri must">MUST</span></td><td class="num">C-2, C-4</td></tr>
+            <tr><th><span class="newmark">NEW</span>업로드 대상 표시</th><td>드래그 중 "[셀프웨딩 · 야외]에 올라갑니다"로 목적지를 미리 보여준다</td><td><span class="pri must">MUST</span></td><td class="num">C-3</td></tr>
+            <tr><th>이미지 다운로드</th><td>원본 화질 그대로 내려받기</td><td><span class="pri must">MUST</span></td><td class="num">E-4</td></tr>
+            <tr><th>링크 이미지 추출</th><td>URL을 넣으면 대표 이미지·제목·출처를 자동으로 가져온다</td><td><span class="pri must">MUST</span></td><td class="num">D-1, D-2</td></tr>
+            <tr><th>추출 실패 대비</th><td>못 가져오면 기본 카드로 저장 + 직접 첨부 가능</td><td><span class="pri must">MUST</span></td><td class="num">D-3</td></tr>
+            <tr><th>댓글</th><td>사진마다 댓글을 달고, 작성자·시간이 보인다</td><td><span class="pri must">MUST</span></td><td class="num">E-2, E-3</td></tr>
+            <tr><th><span class="newmark">NEW</span>저스티파이드 그리드</th><td>행마다 높이를 맞추고 폭은 원본 비율대로. 사진을 자르지 않는다</td><td><span class="pri must">MUST</span></td><td class="num">C-4, E-1</td></tr>
+            <tr><th>작성자·시간 표시</th><td>누가 언제 올렸는지 표시</td><td><span class="pri must">MUST</span></td><td class="num">C-5</td></tr>
+            <tr><th>내용 새로고침</th><td>새로고침하면 친구가 올린 최신 내용이 보인다</td><td><span class="pri must">MUST</span></td><td class="num">E-1</td></tr>
+            <tr><th>모바일 화면 대응</th><td>스마트폰 브라우저에서 보기·올리기·댓글이 모두 가능</td><td><span class="pri must">MUST</span></td><td class="num">전체</td></tr>
+            <tr><th>삭제</th><td>자기가 올린 사진·댓글을 지울 수 있다</td><td><span class="pri must">MUST</span></td><td class="num">F-4</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">5-2</span>있으면 좋음 <span class="pri nice">NICE</span></h4>
+        <div class="tw"><table>
+          <thead><tr><th>기능명</th><th>설명</th><th class="num">우선순위</th><th class="num">흐름</th></tr></thead>
+          <tbody>
+            <tr><th>자동 실시간 갱신</th><td>새로고침 없이 친구가 올린 사진이 바로 나타남</td><td><span class="pri nice">NICE</span></td><td class="num">E-1</td></tr>
+            <tr><th><span class="newmark">NEW</span>새 업로드 표시</th><td>새 사진에 파란 테두리 4초 + 카테고리 카드에 파란 점</td><td><span class="pri nice">NICE</span></td><td class="num">B-3, E-1</td></tr>
+            <tr><th><span class="newmark">NEW</span>접속 중 표시</th><td>헤더에 지금 보드를 보고 있는 사람의 닉네임 + 점</td><td><span class="pri nice">NICE</span></td><td class="num">전체</td></tr>
+            <tr><th><span class="newmark">NEW</span>"새 사진 n장 ↑" 바</th><td>스크롤 중일 때 화면을 밀지 않고 상단에 알림만 표시</td><td><span class="pri nice">NICE</span></td><td class="num">E-1</td></tr>
+            <tr><th><span class="newmark">NEW</span>카테고리 간 사진 이동</th><td>잘못 올린 사진을 다른 카테고리로 옮기기</td><td><span class="pri nice">NICE</span></td><td class="num">F-4</td></tr>
+            <tr><th>검색</th><td>폴더명·댓글·메모 안에서 찾기</td><td><span class="pri nice">NICE</span></td><td class="num">F-5</td></tr>
+            <tr><th>좋아요 / 이모지 반응</th><td>댓글 없이 가볍게 반응</td><td><span class="pri nice">NICE</span></td><td class="num">E-2</td></tr>
+            <tr><th>일괄 다운로드</th><td>폴더 전체를 ZIP으로 내려받기</td><td><span class="pri nice">NICE</span></td><td class="num">E-4</td></tr>
+            <tr><th>클립보드 붙여넣기</th><td>Ctrl+V로 이미지 바로 업로드</td><td><span class="pri nice">NICE</span></td><td class="num">C-2</td></tr>
+            <tr><th>메모</th><td>사진에 짧은 설명 추가</td><td><span class="pri nice">NICE</span></td><td class="num">E-2</td></tr>
+            <tr><th><span class="newmark">NEW</span>대표 이미지 직접 지정</th><td>자동(최신 1장) 대신 원하는 사진을 대표로 고정</td><td><span class="pri nice">NICE</span></td><td class="num">B-2</td></tr>
+            <tr><th>사진 순서 바꾸기</th><td>드래그로 그리드 순서 조정</td><td><span class="pri nice">NICE</span></td><td class="num">C-4</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <section id="s6">
+      <div class="shead"><span class="num">06</span><h3>완료 기준</h3></div>
+      <p>체크는 이 페이지를 연 사람의 브라우저에만 저장됩니다. 다른 사람 화면에는 반영되지 않습니다.</p>
+      <div class="checkbar"><b id="done">0</b> / 25 항목 완료</div>
+
+      <div class="block">
+        <h4><span class="kicker">6-1</span>기능 완료 기준 · 19개</h4>
+        <div class="checks">
+          <label><input type="checkbox" id="c01"><span><i class="n">01</i>보드를 만들면 <b>10초 안에</b> 초대 링크가 생성되고, 복사 버튼 클릭 시 클립보드에 복사된다</span></label>
+          <label><input type="checkbox" id="c02"><span><i class="n">02</i>초대 링크를 받은 사람이 회원가입 없이 <b>화면 터치 3번 이내</b>로 보드에 들어온다</span></label>
+          <label><input type="checkbox" id="c03"><span><i class="n">03</i>보드 홈 첫 화면에 <b>6개 카테고리가 한 줄로 전부</b> 보인다 (1280px 기준, 가로 스크롤 없이)</span></label>
+          <label><input type="checkbox" id="c04"><span><i class="n">04</i>각 카테고리 카드에 <b>최신 업로드 1장</b>이 대표 이미지로 표시되고, [장수]가 실제와 일치한다</span></label>
+          <label><input type="checkbox" id="c05"><span><i class="n">05</i>카테고리 카드를 클릭하면 <b>1초 이내</b>에 해당 카테고리 사진 그리드가 뜬다</span></label>
+          <label><input type="checkbox" id="c06"><span><i class="n">06</i>이미지 <b>5장을 한 번에</b> 드래그해 업로드하면 <b>10초 안에</b> 5장 모두 그리드에 나타난다</span></label>
+          <label><input type="checkbox" id="c07"><span><i class="n">07</i>드래그하는 동안 <b>"[카테고리 · 폴더]에 올라갑니다"</b> 문구에 실제 목적지 이름이 표시된다</span></label>
+          <label><input type="checkbox" id="c08"><span><i class="n">08</i>세로 사진과 가로 사진을 섞어 올려도 <b>잘리지 않고 원본 비율 그대로</b> 보인다</span></label>
+          <label><input type="checkbox" id="c09"><span><i class="n">09</i>업로드한 이미지를 다운로드하면 <b>원본과 동일한 파일</b>(용량·화질 동일)이 저장된다</span></label>
+          <label><input type="checkbox" id="c10"><span><i class="n">10</i>이미지 1장 업로드 후 <b>3초 이내</b>에 썸네일이 화면에 표시된다</span></label>
+          <label><input type="checkbox" id="c11"><span><i class="n">11</i>URL을 붙여넣으면 <b>5초 안에</b> 대표 이미지·제목·출처가 포함된 카드가 만들어진다</span></label>
+          <label><input type="checkbox" id="c12"><span><i class="n">12</i>대표 이미지가 없는 URL을 넣어도 <b>에러 없이</b> 기본 카드로 저장된다</span></label>
+          <label><input type="checkbox" id="c13"><span><i class="n">13</i>자주 쓰는 사이트 <b>5곳 중 4곳 이상</b>에서 이미지 추출에 성공한다 <span class="assume">가정</span></span></label>
+          <label><input type="checkbox" id="c14"><span><i class="n">14</i>한 카테고리 안에서 <b>폴더를 3개</b> 만들고, 칩 클릭 시 <b>1초 이내</b>에 해당 폴더 사진만 걸러진다</span></label>
+          <label><input type="checkbox" id="c15"><span><i class="n">15</i>사진 <b>10장을 선택해 한 번에</b> 폴더로 옮길 수 있다</span></label>
+          <label><input type="checkbox" id="c16"><span><i class="n">16</i>폴더를 삭제해도 <b>안의 사진은 지워지지 않고</b> 전체에 그대로 남는다</span></label>
+          <label><input type="checkbox" id="c17"><span><i class="n">17</i>사진에 댓글을 달면 <b>새로고침 없이</b> 즉시 화면에 나타난다</span></label>
+          <label><input type="checkbox" id="c18"><span><i class="n">18</i>A가 올린 사진을 B가 <b>새로고침 후 100%</b> 확인할 수 있다</span></label>
+          <label><input type="checkbox" id="c19"><span><i class="n">19</i>아이폰·안드로이드 기본 브라우저에서 위 항목 전부가 동일하게 동작한다 (모바일은 2열 그리드)</span></label>
+        </div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">6-2</span>사용성 완료 기준 · 6개</h4>
+        <div class="checks">
+          <label><input type="checkbox" id="c20"><span><i class="n">20</i>실제 친구 <b>2명</b>이 <b>7일간</b> 사용해 <b>사진 30장 이상 · 댓글 10개 이상</b>이 쌓인다</span></label>
+          <label><input type="checkbox" id="c21"><span><i class="n">21</i><b>6개 카테고리 중 4개 이상</b>에 사진이 1장 이상 들어간다 <i>— 카테고리 구분이 실제로 쓰이는지 확인</i></span></label>
+          <label><input type="checkbox" id="c22"><span><i class="n">22</i>7일 후 두 사람 모두 "카톡으로 공유하던 때보다 편하다"에 <b>예</b>라고 답한다</span></label>
+          <label><input type="checkbox" id="c23"><span><i class="n">23</i>사용 중 데이터 유실(올린 사진이 사라짐) <b>0건</b></span></label>
+          <label><input type="checkbox" id="c24"><span><i class="n">24</i>설명 없이 링크만 받은 사람이 <b>첫 사진 업로드까지 2분 이내</b> 도달한다</span></label>
+          <label><input type="checkbox" id="c25"><span><i class="n">25</i>7일간 만들어진 <b>폴더가 1개 이상</b> 생긴다 <i>— 0개면 폴더 기능은 과잉이었다는 뜻</i></span></label>
+        </div>
+      </div>
+    </section>
+
+    <section id="s7">
+      <div class="shead"><span class="num">07</span><h3>범위 제외</h3></div>
+      <p>기준은 <strong>"2명이 쓰는 도구에 지금 당장 필요한가"</strong> 입니다.</p>
+      <div class="tw"><table>
+        <thead><tr><th>제외 항목</th><th>제외 이유</th></tr></thead>
+        <tbody>
+          <tr><th><span class="newmark">NEW</span>카테고리 추가·삭제·이름 변경</th><td>6개는 촬영 종류에 맞춰 이미 정해진 값이다. 고를 필요가 없어야 저장이 빨라진다</td></tr>
+          <tr><th><span class="newmark">NEW</span>폴더 안의 폴더</th><td>2명이 쓰는 보드에서 중첩 폴더는 "어디에 넣었더라"를 만든다</td></tr>
+          <tr><th><span class="newmark">NEW</span>여러 카테고리·폴더 동시 지정</th><td>한 장 = 한 자리. 중복 지정은 "이건 어디 있지"를 만든다</td></tr>
+          <tr><th><span class="newmark">NEW</span>다크 모드</th><td>배경 밝기가 바뀌면 같은 사진의 톤이 다르게 보인다. 레퍼런스 비교가 목적이므로 배경을 오프화이트로 고정한다</td></tr>
+          <tr><th><span class="newmark">NEW</span>사진 자르기·비율 통일</th><td>스냅 레퍼런스는 프레이밍 자체가 참고 대상이라 원본 비율을 유지해야 한다</td></tr>
+          <tr><th>모바일 전용 앱</th><td>앱스토어 심사·배포 비용이 크다. 모바일 브라우저로 같은 경험을 줄 수 있다</td></tr>
+          <tr><th>공개 보드 / 탐색</th><td>비공개 도구다. 공개는 신고·차단·저작권 대응이 따라와 규모가 커진다</td></tr>
+          <tr><th>정식 회원가입·로그인</th><td>비밀번호 찾기, 개인정보 보관 부담이 생긴다</td></tr>
+          <tr><th>세밀한 권한 관리</th><td>2명은 서로 다 믿는 사이다. 인원이 늘면 그때 필요</td></tr>
+          <tr><th>AI 자동 태그·유사 이미지 추천</th><td>카드가 수백 장 쌓인 뒤에야 가치가 생긴다</td></tr>
+          <tr><th>이미지 편집</th><td>별개의 제품 영역. 기존 도구로 편집 후 올리면 된다</td></tr>
+          <tr><th>동영상·PDF 등 이미지 외 파일</th><td>저장 용량과 재생 처리가 별도로 필요하다</td></tr>
+          <tr><th>실시간 커서·동시 편집 표시</th><td>구현 난도가 높고, 인원이 적어 충돌할 일이 거의 없다</td></tr>
+          <tr><th>결제·유료 플랜</th><td>무료 도구로 검증이 먼저다</td></tr>
+          <tr><th>버전 기록 / 휴지통 복구</th><td>삭제 시 확인창으로 대체</td></tr>
+          <tr><th>외부 서비스 연동</th><td>사용자 2명 시나리오에 해당 없음</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="s8">
+      <div class="shead"><span class="num">08</span><h3>가정과 확인할 질문</h3></div>
+
+      <div class="block">
+        <h4><span class="kicker">8-1</span>추정해서 채운 내용</h4>
+        <div class="tw"><table>
+          <thead><tr><th class="num">#</th><th>가정한 내용</th><th>왜 이렇게 추정했나</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><th>사용 인원 2~5명, 보드 1개</th><td>"친구, 나"라는 답변 기준</td></tr>
+            <tr><td class="num">2</td><th>로그인은 초대 링크 + 닉네임만</th><td>진입 장벽을 낮춰야 "바로 올린다"는 목표가 산다</td></tr>
+            <tr><td class="num">3</td><th>"실시간"의 1차 기준은 새로고침</th><td>자동 갱신은 구현 부담이 커서 Nice로 분리</td></tr>
+            <tr><td class="num">4</td><th class="strike">폴더 = 서랍, 카테고리 = 딱지</th><td><b style="color:var(--ink)">v0.2에서 확정됨</b> — 카테고리 6개 고정이 상위, 폴더가 하위</td></tr>
+            <tr><td class="num">5</td><th>이미지 1장 최대 10MB, 보드 2GB</th><td>일반 웹 이미지·스크린샷 기준</td></tr>
+            <tr><td class="num">6</td><th>링크 추출은 OG 태그 방식</th><td>가장 표준적이고 구현이 빠름</td></tr>
+            <tr><td class="num">7</td><th>웹 단일 플랫폼</th><td>앱 개발 비용 회피</td></tr>
+            <tr><td class="num">8</td><th>카드는 최신순 정렬이 기본</th><td>"방금 올린 것"을 보는 게 핵심 목적</td></tr>
+            <tr><td class="num">9</td><th>댓글은 1단계(대댓글 없음)</th><td>2명 대화에 대댓글은 과함</td></tr>
+            <tr><td class="num">10</td><th>삭제는 본인이 올린 것만</th><td>실수 방지</td></tr>
+            <tr><td class="num">11</td><th><span class="newmark">NEW</span>대표 이미지는 최신 1장 자동</th><td>고르는 수고 없이 "최근에 뭐가 들어왔나"가 보임</td></tr>
+            <tr><td class="num">12</td><th><span class="newmark">NEW</span>저스티파이드 그리드</th><td>레퍼런스 화면의 실제 구조. 행 단위로 끊겨 비교가 쉬움</td></tr>
+            <tr><td class="num">13</td><th><span class="newmark">NEW</span>히어로 문구 SNAP REFERENCE</th><td>한글은 얇은 웨이트에서 획이 뭉쳐 영문 대문자로</td></tr>
+            <tr><td class="num">14</td><th><span class="newmark">NEW</span>다크 모드 없음</th><td>사진 톤 판단의 기준선을 하나로 고정</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">8-2</span>결정해주셔야 할 질문</h4>
+        <ol class="qs">
+          <li><div><strong>"실시간"의 기준을 어디까지로 잡을까요?</strong><span>① 새로고침하면 보임(개발 빠름) / ② 자동으로 화면에 나타남(개발 기간 +약 3~5일 <span class="assume">가정</span>). 원래 말씀하신 문제가 "실시간 확인 불가"였기 때문에, 이 답에 따라 제품의 체감이 크게 달라집니다.</span></div></li>
+          <li><div><strong>링크는 주로 어떤 사이트에서 가져오시나요?</strong><span>인스타그램·핀터레스트는 이미지 추출이 자주 막힙니다. 실제로 쓰실 사이트 3~5곳을 알려주시면 그곳부터 확실히 되게 만들겠습니다.</span></div></li>
+          <li><div><strong>친구 외에 다른 사람이 링크를 알게 되면 어떤가요?</strong><span>① 링크만 알면 누구나 입장(간편, 노출 위험) / ② 4자리 입장 코드 추가(한 단계 더 번거로움).</span></div></li>
+          <li><div><strong class="strike">폴더와 카테고리, 둘 다 꼭 필요한가요?</strong><span><b style="color:var(--accent-deep)">v0.2에서 해결됨</b> — 카테고리 6개 고정 + 그 안의 폴더로 확정.</span></div></li>
+          <li><div><strong>다운로드가 정말 자주 쓰이나요?</strong><span>보기만 하면 되는지, 실제로 파일을 내려받아 다른 곳에 쓰시는지에 따라 원본 보관 방식과 저장 용량 설계가 달라집니다.</span></div></li>
+          <li><div><strong>카테고리 대표 이미지를 직접 고르고 싶으신가요?</strong><span>지금은 "가장 최근에 올린 1장"이 자동으로 올라옵니다. 보드 첫 화면의 인상이 매번 바뀌는 셈인데, 마음에 드는 한 장을 고정하는 방식이 더 나을 수도 있습니다.</span></div></li>
+          <li><div><strong>"친구·우정" 이라는 이름 그대로 갈까요?</strong><span>카드 폭이 좁아 두 단어가 한 줄에 들어가려면 글자가 작아집니다. "우정" 한 단어로 줄이면 나머지 5개와 글자 크기가 맞습니다.</span></div></li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="s9">
+      <div class="shead"><span class="num">MAKER</span><h3>Review</h3></div>
+
+      <div class="block">
+        <h4><span class="kicker">①</span>가장 약한 부분</h4>
+        <p><strong>6개 카테고리가 실제 사진 분포와 맞는다는 근거가 없습니다.</strong> 이 문서와 디자인 전체가 "6개로 나뉜다"를 전제로 지어져 있습니다 — 보드 홈 한 줄 배치, 카드 폭, 고정 카테고리, 폴더의 위치까지 전부 여기에 매여 있습니다. 그런데 실제로는 <strong>일상스냅 한 곳에 70%가 쏠리고 웨딩스튜디오는 3장뿐</strong>일 수 있습니다. 그러면 홈 화면의 6칸 중 절반이 늘 비어 보이고, 정작 사진이 몰린 카테고리는 폴더 없이 감당이 안 됩니다.</p>
+        <p>이 가정은 <strong>코드 없이 30분이면 검증됩니다</strong>: 지금 각자 가지고 있는 레퍼런스 사진 30~50장을 6개 이름으로 직접 나눠보면 됩니다. v0.1에서 지적했던 "Must가 많다"는 문제는 계층이 확정되며 정리됐지만, 그 계층 자체의 근거는 아직 비어 있습니다.</p>
+        <p>부차적으로, Must 기능이 <strong>20개로 늘었습니다</strong>(v0.1은 14개). 1개월 일정과 맞는지는 개발자 산정이 필요합니다. <span class="need">확인 필요</span></p>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">②</span>개발자·디자이너가 반드시 물어볼 질문</h4>
+        <div class="qa">
+          <div class="q">
+            <p class="qt">Q1. "실시간이라고 써 있는데, 웹소켓인가요 폴링인가요? 아니면 그냥 새로고침인가요?"</p>
+            <p class="at"><b>A</b>MVP는 <strong>새로고침 기준</strong>입니다(Must). 자동 갱신은 Nice로 분리했고, 만든다면 웹소켓보다 <strong>3~5초 주기 폴링</strong>을 권합니다 — 인원이 5명 이하라 서버 부담이 거의 없고 구현이 훨씬 단순합니다. 다만 처음 호소한 문제가 "실시간 확인 불가"였으므로, 질문 1번의 답에 따라 Must로 올라갈 수 있습니다.</p>
+          </div>
+          <div class="q">
+            <p class="qt">Q2. "저스티파이드 그리드면 이미지 원본 비율을 언제 알죠? 받아봐야 아는 구조면 첫 렌더에서 레이아웃이 튑니다."</p>
+            <p class="at"><b>A</b><strong>업로드 시점에 서버가 비율을 저장</strong>합니다. 클라이언트는 목록 API에서 <code>ratio</code>를 함께 받아 행 배치를 먼저 계산하므로, 이미지가 도착하기 전에 자리가 잡힙니다(CLS 0). 업로드 중인 사진도 파일에서 즉시 비율을 읽어 자리를 먼저 만듭니다.</p>
+          </div>
+          <div class="q">
+            <p class="qt">Q3. "닉네임만으로 들어오면 같은 사람인지 어떻게 구분하죠?"</p>
+            <p class="at"><b>A</b>브라우저 저장소에 닉네임과 임시 식별자를 저장해, 같은 기기·같은 브라우저라면 다시 묻지 않습니다. 다만 <strong>다른 기기에서 접속하면 다른 사람으로 인식</strong>됩니다(본인 사진 삭제 권한에 영향). <span class="need">확인 필요</span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">③</span>수치·사실 확인이 필요한 항목</h4>
+        <div class="tw"><table>
+          <thead><tr><th>항목</th><th>현재 기재값</th><th>확인해야 할 것</th></tr></thead>
+          <tbody>
+            <tr><th>카테고리별 사진 분포</th><td class="num">균등 가정</td><td>실제 레퍼런스 30장으로 확인 <span class="need">확인 필요</span></td></tr>
+            <tr><th>이미지 용량 상한</th><td class="num">10MB / 보드 2GB</td><td>실제 저장소 비용 산정 후 확정 <span class="need">확인 필요</span></td></tr>
+            <tr><th>링크 추출 성공률</th><td class="num">5곳 중 4곳</td><td>인스타그램·핀터레스트는 로그인 요구로 막힐 가능성 높음 <span class="need">확인 필요</span></td></tr>
+            <tr><th>Must 20개 / 1개월</th><td class="num">1개월</td><td>개발자 산정 필요 <span class="need">확인 필요</span></td></tr>
+            <tr><th>업로드 응답 시간</th><td class="num">3초 / 10초</td><td>서버 사양과 네트워크 환경 미정 <span class="need">확인 필요</span></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ============ PART 2 ============ -->
+    <div class="part">
+      <span class="pnum">Part 2</span>
+      <h2>디자인 명세</h2>
+      <p>어떻게 보이고 어떻게 움직이는가. 레퍼런스 2장(사진작가 포트폴리오형 미니멀 에디토리얼)을 기준으로 잡았습니다.</p>
+    </div>
+
+    <section id="d1">
+      <div class="shead"><span class="num">D1</span><h3>디자인 원칙 5가지</h3></div>
+      <p>이 사이트는 스냅사진 레퍼런스를 모으는 곳입니다. 화면이 예뻐 보이는 것보다 <strong>올린 사진의 색·톤·분위기를 정확하게 판단할 수 있는 것</strong>이 먼저입니다.</p>
+      <ol class="rules">
+        <li><b>색은 사진만 쓴다.</b> UI는 무채색으로 고정합니다. 배경·버튼·라벨에 색이 들어가면 사진의 색 판단이 틀어집니다. 유일한 예외는 "실시간 신호"용 블루 한 가지입니다.</li>
+        <li><b>테두리보다 여백.</b> 카드 박스, 그림자, 둥근 모서리를 쓰지 않습니다. 사진은 직각 그대로, 구분은 여백과 1px 실선으로만 합니다.</li>
+        <li><b>글자는 작고 얇게, 제목만 크게.</b> 본문·라벨은 11~14px로 조용히, 페이지 제목만 과감하게 큽니다. 레퍼런스의 대비 구조입니다.</li>
+        <li><b>사진 비율을 자르지 않는다.</b> 스냅 레퍼런스는 프레이밍 자체가 참고 대상입니다.</li>
+        <li><b>한 화면에 정보를 겹쳐 얹지 않는다.</b> 사진 위에 텍스트를 올리지 않고 항상 사진 바깥 아래에 둡니다. (유일한 예외: 마우스를 올렸을 때의 업로더 정보)</li>
+      </ol>
+    </section>
+
+    <section id="d2">
+      <div class="shead"><span class="num">D2</span><h3>화면 구조</h3></div>
+      <pre class="tree"><b>보드 홈</b>                       ← 레퍼런스 1번
+│   대형 타이틀 + 6개 카테고리 카드 1행
+│
+└─ <b>카테고리 상세</b>                ← 레퍼런스 2번
+   │   저스티파이드 그리드 + 폴더 칩 + 업로드
+   │
+   ├─ 폴더 필터 (같은 화면에서 전환, 페이지 이동 없음)
+   │
+   └─ <b>이미지 상세</b> (오버레이)
+          원본 크게 보기 + 댓글 + 다운로드</pre>
+      <p><strong>깊이는 3단계까지만.</strong> 페이지를 더 파고들게 만들면 "3초 안에 저장"이라는 목표가 깨집니다.</p>
+      <div class="tw"><table>
+        <thead><tr><th>계층</th><th>이름</th><th class="num">개수</th><th>만들 수 있나</th><th>관계</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1단계</td><th>카테고리</th><td class="num">6개 고정</td><td>아니오</td><td>이미지 1장 = 카테고리 1개</td></tr>
+          <tr><td class="num">2단계</td><th>폴더</th><td class="num">제한 없음</td><td>예 (사용자 생성)</td><td>이미지 1장 = 폴더 0~1개</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tw"><table>
+        <thead><tr><th class="num">#</th><th>카테고리</th><th>URL</th><th>성격</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><th>개인</th><td class="num">/c/personal</td><td>1인 인물 스냅</td></tr>
+          <tr><td class="num">2</td><th>커플</th><td class="num">/c/couple</td><td>2인 커플 스냅</td></tr>
+          <tr><td class="num">3</td><th>친구·우정</th><td class="num">/c/friends</td><td>2인 이상 친구</td></tr>
+          <tr><td class="num">4</td><th>일상스냅</th><td class="num">/c/daily</td><td>야외·실내 데일리</td></tr>
+          <tr><td class="num">5</td><th>셀프웨딩</th><td class="num">/c/self-wedding</td><td>야외 셀프 웨딩</td></tr>
+          <tr><td class="num">6</td><th>웨딩스튜디오</th><td class="num">/c/wedding-studio</td><td>실내 스튜디오 웨딩</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="d3">
+      <div class="shead"><span class="num">D3</span><h3>색 · 타이포그래피</h3></div>
+
+      <div class="block">
+        <h4><span class="kicker">D3-1</span>색 토큰</h4>
+        <p>순백은 사진의 흰 부분을 삼키고, 크림색은 화이트밸런스를 왜곡합니다. 그래서 <strong>아주 옅은 중성 오프화이트</strong>를 바탕으로 씁니다.</p>
+        <div class="swatches">
+          <div class="sw"><div class="chip" style="background:#F2F2F0"></div><div class="meta"><span class="nm">--paper</span><span class="hx">#F2F2F0</span><span class="use">페이지 배경</span></div></div>
+          <div class="sw"><div class="chip" style="background:#FFFFFF"></div><div class="meta"><span class="nm">--surface</span><span class="hx">#FFFFFF</span><span class="use">입력창·모달</span></div></div>
+          <div class="sw"><div class="chip" style="background:#E6E6E3"></div><div class="meta"><span class="nm">--placeholder</span><span class="hx">#E6E6E3</span><span class="use">사진 없는 칸</span></div></div>
+          <div class="sw"><div class="chip" style="background:#111111"></div><div class="meta"><span class="nm">--ink</span><span class="hx">#111111</span><span class="use">제목·본문</span></div></div>
+          <div class="sw"><div class="chip" style="background:#6B6B68"></div><div class="meta"><span class="nm">--ink-60</span><span class="hx">#6B6B68</span><span class="use">보조 설명·메타</span></div></div>
+          <div class="sw"><div class="chip" style="background:#A5A5A0"></div><div class="meta"><span class="nm">--ink-35</span><span class="hx">#A5A5A0</span><span class="use">비활성 (읽을 글자엔 금지)</span></div></div>
+          <div class="sw"><div class="chip" style="background:#DCDCD8"></div><div class="meta"><span class="nm">--line</span><span class="hx">#DCDCD8</span><span class="use">1px 구분선</span></div></div>
+          <div class="sw"><div class="chip" style="background:#2563EB"></div><div class="meta"><span class="nm">--live</span><span class="hx">#2563EB</span><span class="use">유일한 유채색 · 실시간 신호</span></div></div>
+        </div>
+        <div class="tw"><table>
+          <thead><tr><th>--live 를 쓰는 곳</th><th>쓰지 않는 곳</th></tr></thead>
+          <tbody>
+            <tr><th>새 업로드 카드 외곽선 (4초 후 사라짐)</th><td>버튼 채움</td></tr>
+            <tr><th>업로드 진행 바 1px</th><td>링크 색</td></tr>
+            <tr><th>친구 접속 중 점 4px</th><td>아이콘</td></tr>
+            <tr><th>카테고리 카드의 "새 사진 있음" 점</th><td>강조 텍스트</td></tr>
+          </tbody>
+        </table></div>
+        <div class="note"><b>다크 모드는 만들지 않습니다.</b> 배경 밝기가 바뀌면 같은 사진이 다른 톤으로 보입니다. 레퍼런스를 비교하는 것이 목적이므로 배경은 오프화이트 하나로 고정합니다. (이 명세서 페이지 자체는 다크 모드를 지원하지만, <b>제품은 라이트 단일 테마</b>입니다.)</div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">D3-2</span>타이포그래피</h4>
+        <p>한글과 영문이 한 줄에 섞이므로(<code>SNAP REFERENCE</code> + <code>개인</code>) <strong>한 가족으로 통일</strong>합니다. 권장: <strong>Pretendard</strong> (한글·영문 자소 높이가 맞고 Light 웨이트가 얇게 버팁니다). 대안은 Noto Sans KR 300/400/500이며, 이 경우 대형 타이틀 자간을 <code>.10em</code>까지 넓혀야 레퍼런스 느낌이 납니다.</p>
+        <div class="tw"><table>
+          <thead><tr><th>역할</th><th class="num">크기</th><th class="num">웨이트</th><th class="num">자간</th><th>비고</th></tr></thead>
+          <tbody>
+            <tr><th>디스플레이</th><td class="num">clamp(44, 9vw, 116)px</td><td class="num">200</td><td class="num">.085em</td><td>영문 대문자, 중앙</td></tr>
+            <tr><th>페이지 제목</th><td class="num">28px</td><td class="num">300</td><td class="num">.02em</td><td>카테고리명(한글)</td></tr>
+            <tr><th>섹션 제목</th><td class="num">18px</td><td class="num">400</td><td class="num">.01em</td><td></td></tr>
+            <tr><th>본문</th><td class="num">14px / 1.7</td><td class="num">400</td><td class="num">0</td><td></td></tr>
+            <tr><th>라벨·메타</th><td class="num">11.5px</td><td class="num">500</td><td class="num">.10em</td><td>영문은 대문자</td></tr>
+            <tr><th>숫자</th><td class="num">11.5px</td><td class="num">500</td><td class="num">.06em</td><td>tabular-nums</td></tr>
+          </tbody>
+        </table></div>
+        <div class="note"><b>대괄호 표기법 — 이 사이트의 고유 규칙.</b> 레퍼런스가 <code>[2019-2023]</code>으로 메타를 감싸듯, 숫자 메타는 항상 대괄호 안에 넣습니다. "이건 사진이 아니라 설명"이라는 신호가 됩니다. — <code>[128]</code> 장수 · <code>[2026.09.17]</code> 날짜 · <code>[수아 · 방금]</code> 업로더</div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">D3-3</span>간격 · 모션</h4>
+        <p>간격 단위는 <strong>4의 배수</strong>만 씁니다: 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64 / 96. 화면 좌우 여백 <code>26px</code>, 카테고리 카드 사이 <code>16px</code>, 사진 그리드 사이 <code>18px</code>, 콘텐츠 최대 폭 <code>1600px</code>.</p>
+        <div class="tw"><table>
+          <thead><tr><th>대상</th><th>값</th></tr></thead>
+          <tbody>
+            <tr><th>기본 전환</th><td>160ms cubic-bezier(.2,.6,.2,1)</td></tr>
+            <tr><th>이미지 페이드인</th><td>280ms ease-out, opacity만 (위치 이동 없음)</td></tr>
+            <tr><th>새 업로드 잔광</th><td>--live 외곽선 1px → 4초 유지 → 600ms 페이드아웃</td></tr>
+            <tr><th>호버</th><td>이미지 밝기 −4%만. 확대·기울임·그림자 <b>금지</b></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <section id="d4">
+      <div class="shead"><span class="num">D4</span><h3>화면 A — 보드 홈</h3></div>
+      <p>레퍼런스 1번을 6칸으로 바꾼 화면입니다. 아래는 <strong>실제 제품 색으로 렌더한 미리보기</strong>입니다.</p>
+
+      <p class="pvcap">미리보기 · 보드 홈 (제품 팔레트 고정)</p>
+      <div class="pv">
+        <div class="bar">
+          <span>Reference</span>
+          <span class="nav"></span>
+          <span class="who">지훈 <i class="dot"></i> 수아 <i class="dot"></i></span>
+        </div>
+        <div class="hero">
+          <p class="t">SNAP REFERENCE</p>
+          <p class="m">[ 총 342장 · 2026 ]</p>
+        </div>
+        <div class="strip">
+          <div class="cat"><div class="ph"></div><div class="lb"><span class="n">개인</span><span class="c">[64]</span></div></div>
+          <div class="cat"><div class="ph"></div><div class="lb"><span class="n">커플</span><span class="c">[58]</span><i class="dot"></i></div></div>
+          <div class="cat"><div class="ph"></div><div class="lb"><span class="n">친구·우정</span><span class="c">[41]</span></div></div>
+          <div class="cat"><div class="ph"></div><div class="lb"><span class="n">일상스냅</span><span class="c">[77]</span></div></div>
+          <div class="cat"><div class="ph"></div><div class="lb"><span class="n">셀프웨딩</span><span class="c">[52]</span></div></div>
+          <div class="cat"><div class="ph"></div><div class="lb"><span class="n">웨딩스튜디오</span><span class="c">[50]</span></div></div>
+        </div>
+        <div class="slider"><div class="trk"><div class="hd"></div></div></div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">D4-1</span>레퍼런스에서 가져온 것 / 바꾼 것</h4>
+        <div class="tw"><table>
+          <thead><tr><th>요소</th><th>레퍼런스</th><th>이 제품</th><th>왜</th></tr></thead>
+          <tbody>
+            <tr><th>히어로 문구</th><td>SELECTED WORK</td><td>SNAP REFERENCE</td><td>한글은 얇은 웨이트에서 획이 뭉침</td></tr>
+            <tr><th>대괄호 메타</th><td>[2019-2023]</td><td>[ 총 342장 · 2026 ]</td><td>들어오자마자 "지난번보다 늘었나"를 알 수 있음</td></tr>
+            <tr><th>카드 개수</th><td>5개</td><td>6개</td><td>요청하신 컨셉 6가지</td></tr>
+            <tr><th>사진 비율</th><td>약 4:7</td><td><b>3:4</b></td><td>원본 비율로 6칸을 깔면 높이 430px을 넘어 제목과 카테고리가 한 화면에 안 들어옴</td></tr>
+            <tr><th>카드 아래 라벨</th><td>연도 (2023)</td><td>카테고리명 + [장수]</td><td>같은 자리, 이 제품에 맞는 정보</td></tr>
+            <tr><th>헤더 우측</th><td>FB IN YT</td><td>지금 접속 중인 사람</td><td>실시간이 핵심인 제품에서 그 자리가 가장 값어치 있음</td></tr>
+            <tr><th>하단 슬라이더</th><td>항상 표시</td><td>1280px 이상에선 <b>숨김</b></td><td>6칸이 다 보이면 움직일 게 없는 컨트롤은 장식</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">D4-2</span>카테고리 카드 규격</h4>
+        <div class="tw"><table>
+          <thead><tr><th>속성</th><th>값</th></tr></thead>
+          <tbody>
+            <tr><th>배치</th><td>1행 6열, gap 16px</td></tr>
+            <tr><th>카드 폭</th><td>(100% − 5×16px) / 6 — 1600px 기준 약 245px</td></tr>
+            <tr><th>사진 비율</th><td>3:4 (약 245 × 327px), 모서리 직각(radius 0)</td></tr>
+            <tr><th>대표 이미지</th><td>해당 카테고리의 가장 최근 업로드 1장, 자동</td></tr>
+            <tr><th>비어 있을 때</th><td>--placeholder 채움 + 중앙에 [비어 있음] 11.5px --ink-35</td></tr>
+            <tr><th>라벨</th><td>사진 아래 12px 지점. 한글 14px/400 + [장수] 11.5px/500 --ink-60</td></tr>
+            <tr><th>새 업로드 표시</th><td>라벨 오른쪽에 --live 점 4px. 내가 들어가 보면 사라짐</td></tr>
+            <tr><th>호버</th><td>사진 밝기 −4%. 이름은 굵어지지 않음</td></tr>
+            <tr><th>포커스</th><td>카드 전체에 outline 1px solid --ink, offset 3px</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <section id="d5">
+      <div class="shead"><span class="num">D5</span><h3>화면 B — 카테고리 상세</h3></div>
+      <p>레퍼런스 2번 화면입니다. <strong>업로드와 보기가 같은 화면에서 일어납니다.</strong></p>
+
+      <p class="pvcap">미리보기 · 카테고리 상세 (저스티파이드 그리드)</p>
+      <div class="pv">
+        <div class="bar">
+          <span>Reference</span>
+          <span class="nav"><span>개인</span><span>커플</span><span>친구·우정</span><span>일상스냅</span><span class="cur">셀프웨딩</span><span>웨딩스튜디오</span></span>
+          <span class="who">지훈 <i class="dot"></i></span>
+        </div>
+        <div class="ttl">
+          <span class="l"><span class="h">셀프웨딩</span><span class="c">[52]</span></span>
+          <span class="r">↑ 사진 올리기</span>
+        </div>
+        <div class="chips"><span class="cur">전체</span><span>야외</span><span>실내</span><span>필름톤</span><span class="add">+ 폴더</span></div>
+        <div class="row" style="height:74px">
+          <i style="width:74px" class="live"></i><i style="width:74px"></i><i style="flex:1"></i>
+        </div>
+        <div class="row" style="height:96px">
+          <i style="width:150px"></i><i style="width:64px"></i><i style="flex:1"></i>
+        </div>
+        <div class="row" style="height:82px">
+          <i style="flex:1"></i><i style="width:58px"></i>
+        </div>
+        <p class="legend"><i class="dot"></i> 파란 외곽선 = 친구가 방금 올린 사진 (4초 후 사라짐)</p>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">D5-1</span>저스티파이드 그리드</h4>
+        <p>레퍼런스 2번은 메이슨리(세로 벽돌쌓기)가 <strong>아닙니다</strong>. 한 행 안에서 사진들의 <strong>높이가 같고 폭이 제각각</strong>입니다. 같은 방식으로 만듭니다.</p>
+        <div class="tw"><table>
+          <thead><tr><th>속성</th><th>값</th></tr></thead>
+          <tbody>
+            <tr><th>방식</th><td>행 단위 저스티파이드 — 각 사진 폭 = 높이 × 원본비율, 행 합계가 컨테이너 폭이 되도록 높이를 미세 조정</td></tr>
+            <tr><th>목표 행 높이</th><td>데스크톱 260px (허용 200~330px)</td></tr>
+            <tr><th>사진 간격</th><td>18px (가로·세로 동일)</td></tr>
+            <tr><th>마지막 행</th><td>남는 칸을 늘려 채우지 않고 <b>왼쪽 정렬로 그대로 둠</b> — 억지로 늘리면 마지막 사진만 비정상적으로 커짐</td></tr>
+            <tr><th>자르기</th><td>없음. 원본 비율 유지</td></tr>
+            <tr><th>정렬</th><td>최신순 고정</td></tr>
+          </tbody>
+        </table></div>
+        <div class="note"><b>왜 메이슨리가 아닌가</b> — 메이슨리는 세로로 읽히고, 스크롤할 때 사진들이 서로 다른 위치에서 튀어나옵니다. 저스티파이드 그리드는 행 단위로 눈이 끊기기 때문에 <b>여러 장을 나란히 비교하기 쉽습니다.</b> 레퍼런스 비교가 목적인 이 제품에 맞습니다.</div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">D5-2</span>폴더 칩 행</h4>
+        <div class="tw"><table>
+          <thead><tr><th>속성</th><th>값</th></tr></thead>
+          <tbody>
+            <tr><th>형태</th><td>알약형 버튼 아님. <b>텍스트 + 활성 시 아래 1px 실선</b> — 칩 박스는 UI 색을 늘림</td></tr>
+            <tr><th>크기</th><td>13px / 400 / 간격 20px</td></tr>
+            <tr><th>기본값</th><td>"전체" 활성</td></tr>
+            <tr><th>개수</th><td>폴더가 8개를 넘으면 가로 스크롤</td></tr>
+            <tr><th>+ 폴더</th><td>클릭 → 그 자리에 인라인 입력창(밑줄 1px). Enter 생성, Esc 취소</td></tr>
+            <tr><th>이름 규칙</th><td>최대 12자. 중복이면 입력창 아래 "같은 이름의 폴더가 있습니다"</td></tr>
+            <tr><th>수정·삭제</th><td>폴더명 우클릭/길게 누르기 → 이름 바꾸기 / 삭제. 삭제해도 사진은 "전체"로 남음</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">D5-3</span>업로드와 실시간</h4>
+        <div class="tw"><table>
+          <thead><tr><th>상황</th><th>표현</th></tr></thead>
+          <tbody>
+            <tr><th>드래그 중</th><td>전체 화면 오버레이 — 1px 점선, 바탕 --paper 92%, 중앙에 "여기에 놓으면 [셀프웨딩 · 야외]에 올라갑니다" 18px/300</td></tr>
+            <tr><th>업로드 중</th><td>그리드 맨 앞에 <b>자리를 먼저 만들고</b> --placeholder로 채움. 비율은 파일에서 즉시 읽어 반영 → 나중에 레이아웃이 튀지 않음. 하단 1px --live 진행 바</td></tr>
+            <tr><th>업로드 실패</th><td>자리를 회색으로 두고 중앙에 "올리지 못했습니다 · 다시 시도". 사과 문구·느낌표·빨간색 없음</td></tr>
+            <tr><th>친구 접속 중</th><td>헤더 우측 닉네임 옆 --live 점 4px</td></tr>
+            <tr><th>친구가 올림</th><td>그리드 맨 앞 삽입 + 1px --live 외곽선 4초 후 페이드아웃</td></tr>
+            <tr><th>다른 카테고리에 있을 때</th><td>헤더의 해당 카테고리 이름 옆 --live 점. 들어가면 사라짐</td></tr>
+            <tr><th>스크롤 중일 때</th><td><b>화면을 밀어내지 않음.</b> 상단에 "새 사진 3장 ↑" 바(32px) → 클릭하면 맨 위로</td></tr>
+          </tbody>
+        </table></div>
+        <div class="note">마지막 항목이 중요합니다. 보고 있는 화면이 갑자기 밀리면 "실시간"은 편리함이 아니라 방해가 됩니다.</div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">D5-4</span>선택 모드 · 이미지 상세</h4>
+        <ul class="plain">
+          <li><strong>선택 모드</strong> — 사진 위 체크박스(14px 사각, radius 0) 또는 Shift 드래그. 하단 고정 액션 바(52px): <code>12장 선택 · 폴더로 이동 ▾ · 다운로드 · 삭제 · 선택 해제</code></li>
+          <li><strong>삭제 권한</strong> — 본인이 올린 사진만. 남의 사진이 섞이면 "내가 올린 8장만 지울 수 있습니다"로 표시. 확인창에 빨간 버튼 없음</li>
+          <li><strong>이미지 상세(라이트박스)</strong> — 배경 --paper 96% (검정 딤 아님, 사진 톤 판단을 위해). 좌측 사진 <code>min(72vw, 88vh)</code>, 우측 320px 패널에 업로더·폴더·댓글·다운로드. 1024px 미만에선 패널이 사진 아래로</li>
+          <li><strong>조작</strong> — <code>‹ ›</code> 또는 <code>← →</code>, 닫기 <code>Esc</code>. 댓글은 Enter 전송 / Shift+Enter 줄바꿈</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="d6">
+      <div class="shead"><span class="num">D6</span><h3>반응형</h3></div>
+      <div class="tw"><table>
+        <thead><tr><th class="num">구간</th><th>보드 홈</th><th>카테고리 그리드</th><th>헤더</th></tr></thead>
+        <tbody>
+          <tr><td class="num">≥1280px</td><th>6열 1행, 슬라이더 숨김</th><td>저스티파이드, 목표 행 높이 260px</td><td>전체 노출</td></tr>
+          <tr><td class="num">1024~1279</td><th>6열 가로 스크롤 + 슬라이더</th><td>목표 행 높이 220px</td><td>전체 노출</td></tr>
+          <tr><td class="num">768~1023</td><th>3열 2행</th><td>목표 행 높이 180px</td><td>카테고리 가로 스크롤</td></tr>
+          <tr><td class="num">&lt;768</td><th>2열 3행</th><td><b>2열 고정 그리드</b> (저스티파이드 해제)</td><td>로고 + 햄버거</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note"><b>모바일에서 저스티파이드를 포기하는 이유</b> — 폭이 좁으면 한 행에 1~2장밖에 못 들어가 행 높이가 널뛰고, 세로 사진 한 장이 화면을 다 먹습니다. 2열 고정 그리드가 훑어보기에 낫습니다.</div>
+      <ul class="plain">
+        <li>모바일 좌우 여백 16px, 사진 간격 8px</li>
+        <li>"↑ 사진 올리기"는 우하단 플로팅 원형 버튼으로 바꾸지 <strong>않습니다</strong> — 사진을 가립니다. 제목 줄 우측 텍스트를 그대로 유지</li>
+        <li>하단 액션 바에 <code>env(safe-area-inset-bottom)</code> 만큼 패딩 추가</li>
+      </ul>
+    </section>
+
+    <section id="d7">
+      <div class="shead"><span class="num">D7</span><h3>상태와 문구 · 접근성</h3></div>
+      <div class="tw"><table>
+        <thead><tr><th>상황</th><th>화면</th><th>문구</th></tr></thead>
+        <tbody>
+          <tr><th>보드가 완전히 비어 있음</th><td>카드 6개 모두 회색</td><td>첫 사진을 올려보세요. 카테고리를 고르면 시작됩니다.</td></tr>
+          <tr><th>카테고리가 비어 있음</th><td>점선 1px 영역(높이 260px)</td><td>아직 사진이 없습니다. 파일을 여기로 끌어다 놓으세요.</td></tr>
+          <tr><th>폴더가 비어 있음</th><td>동일</td><td>이 폴더는 비어 있습니다. 사진을 선택해 옮겨보세요.</td></tr>
+          <tr><th>업로드 실패</th><td>해당 자리만 회색 유지</td><td>올리지 못했습니다 · 다시 시도</td></tr>
+          <tr><th>파일 형식 안 맞음</th><td>오버레이 문구 교체</td><td>이미지 파일만 올릴 수 있습니다 (JPG, PNG, WEBP, HEIC)</td></tr>
+          <tr><th>용량 초과</th><td>동일</td><td>한 장에 10MB까지 올릴 수 있습니다</td></tr>
+          <tr><th>링크 추출 실패</th><td>회색 카드 생성</td><td>이미지를 못 가져왔습니다 · 직접 넣기</td></tr>
+          <tr><th>연결 끊김</th><td>헤더 점이 회색으로</td><td>연결 끊김 · 다시 연결 중</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note"><b>문구 규칙</b> — 사과하지 않고, 무엇이 안 됐는지와 다음에 뭘 누르면 되는지만 씁니다. 느낌표·이모지를 쓰지 않습니다.</div>
+      <div class="block">
+        <h4><span class="kicker">D7-2</span>접근성</h4>
+        <ul class="plain">
+          <li>모든 이미지에 <code>alt</code>: 메모가 있으면 메모, 없으면 "셀프웨딩 카테고리 사진, 수아 업로드, 2026년 9월 17일"</li>
+          <li>키보드만으로 전 기능 조작 가능. 포커스 링은 <code>1px solid --ink</code> + offset 3px (그림자형 링 아님)</li>
+          <li>대비비: <code>--ink</code>/<code>--paper</code> 약 16:1, <code>--ink-60</code>/<code>--paper</code> 약 5.2:1 — 둘 다 AA 통과. <strong>--ink-35는 장식·비활성에만</strong></li>
+          <li><code>--live</code> 점은 색만으로 정보를 전달하므로, 항상 <strong>위치(이름 옆)와 숫자("새 사진 3장")를 함께</strong> 제공</li>
+          <li>클릭 대상 최소 크기: 데스크톱 32×32px, 모바일 44×44px</li>
+          <li><code>prefers-reduced-motion: reduce</code>일 때 잔광은 색만 남기고 애니메이션은 모두 끔</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="d8">
+      <div class="shead"><span class="num">D8</span><h3>개발 참고</h3></div>
+
+      <div class="block">
+        <h4><span class="kicker">D8-1</span>컴포넌트 목록</h4>
+        <div class="tw"><table>
+          <thead><tr><th>컴포넌트</th><th>쓰이는 곳</th><th>비고</th></tr></thead>
+          <tbody>
+            <tr><th>Header</th><td>전 화면</td><td>카테고리 링크 노출 여부 prop</td></tr>
+            <tr><th>HeroTitle</th><td>보드 홈</td><td>대괄호 메타 슬롯 포함</td></tr>
+            <tr><th>CategoryCard</th><td>보드 홈</td><td>대표 이미지 + 이름 + [n] + live dot</td></tr>
+            <tr><th>CategorySlider</th><td>보드 홈</td><td>≥1280px에서 미렌더</td></tr>
+            <tr><th>FolderChips</th><td>카테고리 상세</td><td>인라인 생성 입력 포함</td></tr>
+            <tr><th>JustifiedGrid</th><td>카테고리 상세</td><td>비율 배열 → 행 분배 계산</td></tr>
+            <tr><th>PhotoTile</th><td>그리드</td><td>선택 / 업로드 진행 / live 잔광 상태</td></tr>
+            <tr><th>DropOverlay</th><td>카테고리 상세</td><td>전역 드래그 이벤트</td></tr>
+            <tr><th>SelectionBar</th><td>카테고리 상세</td><td>하단 고정</td></tr>
+            <tr><th>Lightbox</th><td>이미지 상세</td><td>댓글 패널 포함</td></tr>
+            <tr><th>EmptyState</th><td>여러 곳</td><td>문구만 교체</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">D8-2</span>저스티파이드 그리드 계산</h4>
+        <pre class="tree">// photos: [{ id, ratio }]   ratio = 원본 width / height
+function layoutRows(photos, containerW, targetH, gap) {
+  const rows = []; let row = [], sumRatio = 0;
+  for (const p of photos) {
+    row.push(p); sumRatio += p.ratio;
+    // 이 행을 컨테이너 폭에 맞췄을 때의 실제 높이
+    const h = (containerW - gap * (row.length - 1)) / sumRatio;
+    if (h &lt;= targetH) { rows.push({ items: row, height: h }); row = []; sumRatio = 0; }
+  }
+  // 마지막 행은 늘리지 않고 targetH 그대로 왼쪽 정렬
+  if (row.length) rows.push({ items: row, height: targetH, last: true });
+  return rows;
+}</pre>
+        <ul class="plain">
+          <li><strong>원본 비율은 업로드 시점에 서버에 저장</strong>합니다. 이미지를 받아봐야 비율을 아는 구조면 첫 렌더에서 레이아웃이 튑니다.</li>
+          <li>썸네일은 목표 행 높이의 2배(520px 높이)로 생성해 고해상도 화면까지 커버합니다.</li>
+        </ul>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">D8-3</span>이미지 처리</h4>
+        <div class="tw"><table>
+          <thead><tr><th>항목</th><th>값</th></tr></thead>
+          <tbody>
+            <tr><th>허용 형식</th><td>JPG, PNG, WEBP, HEIC (HEIC는 업로드 시 JPG 변환)</td></tr>
+            <tr><th>원본 보관</th><td>그대로 보관 — 다운로드가 Must이므로 재압축 금지</td></tr>
+            <tr><th>썸네일</th><td>폭 기준 400 / 800 / 1600px 3종, WEBP</td></tr>
+            <tr><th>EXIF</th><td>회전 정보만 적용, <b>위치정보는 제거하고 저장</b></td></tr>
+            <tr><th>지연 로딩</th><td>화면 아래 사진은 loading="lazy", 비율 박스를 미리 잡아 CLS 0 유지</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="block">
+        <h4><span class="kicker">D8-4</span>다음에 결정할 디자인 사항</h4>
+        <ol class="qs">
+          <li><div><strong>보드 홈 히어로 문구</strong><span>SNAP REFERENCE로 제안했습니다. 다른 문구를 원하시면 영문 대문자 12~16자가 레퍼런스 비율에 맞습니다.</span></div></li>
+          <li><div><strong>카테고리 대표 이미지</strong><span>자동(최신 1장)으로 잡았습니다. 직접 고르는 방식이 필요한지 확인이 필요합니다.</span></div></li>
+          <li><div><strong>6개 카테고리 순서</strong><span>요청하신 순서를 고정으로 두었습니다. 사진이 많은 순으로 자동 정렬하는 방식도 가능합니다.</span></div></li>
+          <li><div><strong>"친구·우정" 표기</strong><span>카드 폭에 두 단어가 들어가야 해 가운뎃점으로 묶었습니다. "우정"만 쓰는 편이 짧고 읽기 쉽습니다.</span></div></li>
+        </ol>
+      </div>
+    </section>
+
+  </main>
+
+  <aside class="verdict">
+    <span class="lbl">이 PRD에서 가장 먼저 검증해야 할 것 1가지</span>
+    <p>지금 가진 레퍼런스 사진 30장을 6개 카테고리로 나눴을 때, 한 곳에 몰리지 않고 실제로 갈라지는가.</p>
+    <p class="sub">이 6개 구분 위에 홈 화면·업로드 흐름·폴더 위치까지 전부 올라가 있는데, 아직 사진 한 장으로도 확인된 적이 없습니다. 코드 없이 30분이면 끝납니다.<br><br><b style="color:#fff">함께 진행할 1일차 기술 확인</b> — 인스타그램·핀터레스트 URL 10개로 OG 태그 추출을 돌려봅니다. 이것이 안 되면 링크 카드가 전부 회색 빈 박스가 되어, 이 제품은 카톡보다 나을 게 없어집니다.</p>
+  </aside>
+
+  <footer>
+    <span>Reference PRD v0.2 · 디자인 v0.1</span>
+    <span>2026-09-17</span>
+    <span>MAKER 공식 적용</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var KEY='reference-prd-checks';
+  var boxes=Array.prototype.slice.call(document.querySelectorAll('.checks input[type=checkbox]'));
+  var out=document.getElementById('done');
+
+  function count(){
+    var n=0;
+    boxes.forEach(function(b){ if(b.checked) n++; });
+    if(out) out.textContent=n;
+  }
+  function save(){
+    try{
+      var s={};
+      boxes.forEach(function(b){ s[b.id]=b.checked; });
+      localStorage.setItem(KEY, JSON.stringify(s));
+    }catch(e){}
+  }
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(raw){
+      var s=JSON.parse(raw);
+      boxes.forEach(function(b){ if(s[b.id]) b.checked=true; });
+    }
+  }catch(e){}
+  count();
+  boxes.forEach(function(b){ b.addEventListener('change', function(){ count(); save(); }); });
+
+  var links=Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+  var map={};
+  links.forEach(function(a){ map[a.getAttribute('href').slice(1)]=a; });
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){
+          links.forEach(function(a){ a.classList.remove('on'); });
+          var a=map[en.target.id];
+          if(a) a.classList.add('on');
+        }
+      });
+    },{rootMargin:'-10% 0px -70% 0px'});
+    Array.prototype.forEach.call(document.querySelectorAll('main section'), function(s){ io.observe(s); });
+  }
+})();
+</script>
+
+</body>
+</html>
