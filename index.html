@@ -235,8 +235,9 @@ input{font:inherit}
 #lb .box{display:flex;gap:8px;border-bottom:1px solid var(--line);padding-bottom:6px}
 #lb .box input{flex:1;border:0;background:none;outline:none;font-size:13px}
 #lb .box button{font-size:12px;color:var(--ink60);flex:none}
-#lb .acts{display:flex;gap:18px;font-size:13px;color:var(--ink60);padding-top:4px}
+#lb .acts{display:flex;gap:18px;font-size:13px;color:var(--ink60);padding-top:4px;flex-wrap:wrap}
 #lb .acts button:hover{color:var(--ink)}
+#lb .acts button.on{color:var(--accent)}
 #lb .close{position:fixed;top:16px;right:20px;font-size:22px;line-height:1;color:var(--ink60);z-index:2}
 #lb .close:hover{color:var(--ink)}
 
@@ -347,7 +348,7 @@ input{font:inherit}
       <div class="cmts" id="lb-cmts"></div>
       <div class="box"><input id="lb-input" placeholder="댓글 쓰기…" maxlength="300"><button id="lb-send">보내기</button></div>
       <hr>
-      <div class="acts"><button id="lb-dl">↓ 원본 다운로드</button><button id="lb-del">삭제</button></div>
+      <div class="acts"><button id="lb-cover">대표로 지정</button><button id="lb-dl">↓ 다운로드</button><button id="lb-del">삭제</button></div>
     </div>
   </div>
 </div>
@@ -396,6 +397,7 @@ var CATS=[
 var sb=null, me="", view="home", cat=null, folder=null;
 var photos=[], folders=[], picking=false, sel=[], lbIdx=-1, lbList=[];
 var io=null, chan=null, warnedStorage=false;
+var covers={};   /* {카테고리: 대표 사진 id} — 비어 있으면 최신 1장이 자동으로 대표 */
 
 /* ================= 유틸 ================= */
 function $(id){return document.getElementById(id)}
@@ -456,18 +458,35 @@ function renderPeers(){
 }
 
 /* ================= 보드 홈 ================= */
+/* covers 표가 아직 없어도 앱이 멈추지 않도록, 실패하면 빈 값으로 넘어갑니다 */
+function loadCovers(){
+  return sb.from("covers").select("cat,photo_id").then(function(r){
+    covers={};
+    if(!r.error)(r.data||[]).forEach(function(c){if(c.photo_id)covers[c.cat]=c.photo_id});
+    return covers;
+  }).catch(function(){covers={};return covers});
+}
 function loadHome(){
-  return sb.from("photos").select("id,cat,path,created_at").order("created_at",{ascending:false})
-    .then(function(r){
-      if(r.error){toast("사진 목록을 불러오지 못했습니다");return}
-      var rows=r.data||[], byCat={};
-      rows.forEach(function(p){
-        if(!byCat[p.cat])byCat[p.cat]={n:0,cover:null};
-        byCat[p.cat].n++;
-        if(!byCat[p.cat].cover)byCat[p.cat].cover=p;
-      });
-      renderHome(byCat,rows.length);
+  return Promise.all([
+    sb.from("photos").select("id,cat,path,created_at").order("created_at",{ascending:false}),
+    loadCovers()
+  ]).then(function(res){
+    var r=res[0];
+    if(r.error){toast("사진 목록을 불러오지 못했습니다");return}
+    var rows=r.data||[], byCat={}, byId={};
+    rows.forEach(function(p){
+      byId[p.id]=p;
+      if(!byCat[p.cat])byCat[p.cat]={n:0,cover:null};
+      byCat[p.cat].n++;
+      if(!byCat[p.cat].cover)byCat[p.cat].cover=p;   /* 기본값 = 최신 1장 */
     });
+    /* 직접 지정한 대표 사진이 있으면 그것으로 교체 */
+    Object.keys(covers).forEach(function(k){
+      var p=byId[covers[k]];
+      if(p&&byCat[k])byCat[k].cover=p;
+    });
+    renderHome(byCat,rows.length);
+  });
 }
 function renderHome(byCat,total){
   var strip=$("strip");
@@ -503,7 +522,8 @@ function renderHome(byCat,total){
 function loadCat(){
   return Promise.all([
     sb.from("photos").select("*").eq("cat",cat).order("created_at",{ascending:false}),
-    sb.from("folders").select("*").eq("cat",cat).order("created_at",{ascending:true})
+    sb.from("folders").select("*").eq("cat",cat).order("created_at",{ascending:true}),
+    loadCovers()
   ]).then(function(r){
     if(r[0].error||r[1].error){toast("불러오지 못했습니다");return}
     photos=r[0].data||[];
@@ -841,7 +861,13 @@ function openLb(i){
   $("lb-where").textContent=catOf(p.cat).name+(f?" · "+f.name:"");
   $("lb-meta").textContent="["+p.uploader+" · "+when(p.created_at)+"]";
   $("lb-cmts").innerHTML="";
+  syncCoverBtn(p);
   loadComments(p.id);
+}
+function syncCoverBtn(p){
+  var b=$("lb-cover"),isCover=covers[p.cat]===p.id;
+  b.textContent=isCover?"★ 대표 사진":"대표로 지정";
+  b.classList.toggle("on",isCover);
 }
 function loadComments(photoId){
   return sb.from("comments").select("*").eq("photo_id",photoId).order("created_at",{ascending:true})
@@ -938,6 +964,9 @@ function connect(){
   chan.on("postgres_changes",{event:"*",schema:"public",table:"comments"},function(p){
     var row=p.new||p.old;
     if(lbIdx>=0&&row&&lbList[lbIdx]&&lbList[lbIdx].id===row.photo_id)loadComments(row.photo_id);
+  });
+  chan.on("postgres_changes",{event:"*",schema:"public",table:"covers"},function(){
+    loadCovers().then(function(){if(view==="home")loadHome()});
   });
   chan.on("presence",{event:"sync"},renderPeers);
   chan.subscribe(function(status){
@@ -1046,6 +1075,28 @@ function wire(){
   $("lb-next").onclick=function(){stepLb(1)};
   $("lb-send").onclick=sendCmt;
   $("lb-input").onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();sendCmt()}};
+  $("lb-cover").onclick=function(){
+    if(lbIdx<0)return;
+    var p=lbList[lbIdx];
+    if(covers[p.cat]===p.id){
+      sb.from("covers").delete().eq("cat",p.cat).then(function(r){
+        if(r.error){toast("대표 사진을 해제하지 못했습니다");return}
+        delete covers[p.cat];
+        syncCoverBtn(p);
+        toast("대표 사진을 해제했습니다 — 가장 최근 사진이 표시됩니다");
+      });
+      return;
+    }
+    sb.from("covers").upsert({cat:p.cat,photo_id:p.id},{onConflict:"cat"}).then(function(r){
+      if(r.error){
+        toast("대표 사진을 지정하지 못했습니다 — covers 표를 먼저 만들어 주세요");
+        return;
+      }
+      covers[p.cat]=p.id;
+      syncCoverBtn(p);
+      toast(catOf(p.cat).name+" 대표 사진으로 지정했습니다");
+    });
+  };
   $("lb-dl").onclick=function(){if(lbIdx>=0)download(lbList[lbIdx])};
   $("lb-del").onclick=function(){
     if(lbIdx<0)return;
