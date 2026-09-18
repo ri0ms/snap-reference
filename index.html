@@ -74,7 +74,17 @@ input{font:inherit}
 }
 #hdr .who .peer{display:flex;align-items:center;gap:5px}
 @media (max-width:767px){#hdr .who{display:none}}
-.dot{width:4px;height:4px;border-radius:50%;background:var(--live);flex:none;display:inline-block}
+/* 사람 표시 점 — 닉네임마다 색이 다릅니다 (색은 JS 에서 넣습니다) */
+.dot{width:6px;height:6px;border-radius:50%;background:var(--live);flex:none;display:inline-block}
+
+/* 사진 오른쪽 위, 누가 올렸는지 알려주는 동그라미.
+   어떤 사진 위에도 보이도록 흰 테두리를 두릅니다. */
+.tile .who{
+  position:absolute;top:8px;right:8px;
+  width:11px;height:11px;border-radius:50%;
+  box-shadow:0 0 0 1.5px rgba(255,255,255,.92), 0 1px 3px rgba(17,17,17,.3);
+  pointer-events:none;
+}
 
 /* ---------- home ---------- */
 .wrap{padding-inline:var(--gx);max-width:1600px;margin:0 auto}
@@ -450,6 +460,26 @@ function el(tag,cls){var e=document.createElement(tag);if(cls)e.className=cls;re
 function catOf(slug){for(var i=0;i<CATS.length;i++)if(CATS[i].slug===slug)return CATS[i];return CATS[0]}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
 function byId(id){for(var i=0;i<photos.length;i++)if(photos[i].id===id)return photos[i];return null}
+
+/* 사람 색 —— 이름을 해시해서 고르면 두 글자 한글끼리 색이 자주 겹칩니다.
+   그래서 보드에서 만난 사람들을 이름순으로 줄 세워 앞에서부터 나눠 줍니다.
+   6명까지는 절대 겹치지 않습니다. */
+var PERSON_COLORS=["#E0563B","#2F7FD4","#3F9E6B","#C9A227","#8B5FBF","#D4608F"];
+var peopleKnown=[],peopleColors={};
+function notePeople(names){
+  var added=false;
+  names.forEach(function(n){
+    if(n&&peopleKnown.indexOf(n)<0){peopleKnown.push(n);added=true}
+  });
+  if(added){
+    peopleColors={};
+    peopleKnown.slice().sort().forEach(function(n,i){
+      peopleColors[n]=PERSON_COLORS[i%PERSON_COLORS.length];
+    });
+  }
+  return added;
+}
+function personColor(name){return peopleColors[name]||"#A5A5A0"}
 function publicUrl(path){return SUPABASE_URL+"/storage/v1/object/public/"+BUCKET+"/"+path}
 function when(ts){
   var t=new Date(ts).getTime();
@@ -532,10 +562,14 @@ function renderPeers(){
       if(m&&m.name&&names.indexOf(m.name)<0)names.push(m.name);
     });
   });
+  /* 새 사람이 들어오면 색 배정이 바뀌므로 사진 쪽도 다시 칠합니다 */
+  if(notePeople(names)&&view==="cat")renderGrid();
   names.forEach(function(n){
     var s=el("span","peer");
     s.appendChild(document.createTextNode(n));
-    s.appendChild(el("i","dot"));
+    var d=el("i","dot");
+    d.style.background=personColor(n);   /* 사진 위 동그라미와 같은 색 = 이름표 역할 */
+    s.appendChild(d);
     box.appendChild(s);
   });
 }
@@ -551,12 +585,13 @@ function loadCovers(){
 }
 function loadHome(){
   return Promise.all([
-    sb.from("photos").select("id,cat,path,created_at").order("created_at",{ascending:false}),
+    sb.from("photos").select("id,cat,path,uploader,created_at").order("created_at",{ascending:false}),
     loadCovers()
   ]).then(function(res){
     var r=res[0];
     if(r.error){toast("사진 목록을 불러오지 못했습니다");return}
     var rows=r.data||[], byCat={}, byId={};
+    notePeople(rows.map(function(p){return p.uploader}).concat(me?[me]:[]));
     rows.forEach(function(p){
       byId[p.id]=p;
       if(!byCat[p.cat])byCat[p.cat]={n:0,cover:null};
@@ -611,6 +646,7 @@ function loadCat(){
     if(r[0].error||r[1].error){toast("불러오지 못했습니다");return}
     photos=r[0].data||[];
     folders=r[1].data||[];
+    notePeople(photos.map(function(p){return p.uploader}).concat(me?[me]:[]));
   });
 }
 function visible(){
@@ -816,6 +852,11 @@ function tile(p){
   var cap=el("div","cap");
   cap.textContent="["+p.uploader+" · "+when(p.created_at)+"]";
   t.appendChild(cap);
+
+  var who=el("div","who");
+  who.style.background=personColor(p.uploader);
+  who.title=p.uploader;
+  t.appendChild(who);
 
   var pick=el("div","pick");
   pick.onclick=function(e){e.stopPropagation();toggleSel(p.id,t)};
@@ -1090,8 +1131,9 @@ function connect(){
   });
   chan.on("presence",{event:"sync"},renderPeers);
   chan.subscribe(function(status){
-    /* 보기 전용 방문자는 참여자로 잡히지 않습니다 (실시간 갱신은 그대로 받습니다) */
-    if(status==="SUBSCRIBED"&&!RO)chan.track({name:me});
+    /* 보기 전용 방문자와 테스트 접속은 참여자 목록에 넣지 않습니다
+       (실시간 갱신은 그대로 받습니다) */
+    if(status==="SUBSCRIBED"&&!RO&&!TEST)chan.track({name:me});
   });
 }
 function onInsert(row){
@@ -1099,6 +1141,7 @@ function onInsert(row){
   if(view==="home"){loadHome();return}
   if(view!=="cat"||row.cat!==cat)return;
   if(byId(row.id))return;
+  notePeople([row.uploader]);      /* 처음 보는 사람이면 색을 배정합니다 */
   row.fresh=(row.uploader!==me);
   photos.unshift(row);
   renderCat();
