@@ -297,6 +297,7 @@ body.ro .chips button.add,
 body.ro .tile .pick,
 body.ro #lb-cmt-block,
 body.ro #lb-cover,
+body.ro #lb-cat,
 body.ro #lb-del,
 body.ro #hdr .who{display:none!important}
 body.ro .ctitle{padding-bottom:14px}
@@ -349,6 +350,7 @@ body.ro .ctitle{padding-bottom:14px}
 <div id="selbar" hidden>
   <span class="n" id="sel-n">0장 선택</span>
   <button id="sel-move">폴더로 이동</button>
+  <button id="sel-cat">카테고리 옮기기</button>
   <button id="sel-dl">다운로드</button>
   <button id="sel-del">삭제</button>
   <span class="sp"></span>
@@ -375,7 +377,7 @@ body.ro .ctitle{padding-bottom:14px}
         <div class="box"><input id="lb-input" placeholder="댓글 쓰기…" maxlength="300"><button id="lb-send">보내기</button></div>
       </div>
       <hr>
-      <div class="acts"><button id="lb-cover">대표로 지정</button><button id="lb-dl">↓ 다운로드</button><button id="lb-del">삭제</button></div>
+      <div class="acts"><button id="lb-cover">대표로 지정</button><button id="lb-cat">카테고리 옮기기</button><button id="lb-dl">↓ 다운로드</button><button id="lb-del">삭제</button></div>
     </div>
   </div>
 </div>
@@ -425,6 +427,7 @@ var sb=null, me="", view="home", cat=null, folder=null;
 var photos=[], folders=[], picking=false, sel=[], lbIdx=-1, lbList=[];
 var io=null, chan=null, warnedStorage=false;
 var covers={};   /* {카테고리: 대표 사진 id} — 비어 있으면 최신 1장이 자동으로 대표 */
+var lbPushed=false;  /* 크게 보기를 열 때 쌓은 방문 기록이 있는지 */
 
 /* 보기 전용 모드 — 주소에 ?view 가 붙으면 켜집니다.
    제3자에게 보낼 링크: .../?view   (닉네임을 묻지 않고, 편집 수단이 모두 숨겨집니다) */
@@ -893,6 +896,11 @@ function openLb(i){
   var p=lbList[i];
   $("lb").hidden=false;
   document.body.style.overflow="hidden";
+  /* 휴대폰 뒤로 가기로 닫을 수 있게 방문 기록을 하나 쌓습니다.
+     사진을 넘길 때(‹ ›)는 이미 쌓여 있으므로 다시 쌓지 않습니다. */
+  if(!lbPushed){
+    try{history.pushState({lb:1},"",location.href);lbPushed=true}catch(e){}
+  }
   var img=$("lb-img");
   img.removeAttribute("src");
   img.alt=catOf(p.cat).name+" 사진";
@@ -945,7 +953,14 @@ function renderCmts(rows){
   });
   box.scrollTop=box.scrollHeight;
 }
-function closeLb(){$("lb").hidden=true;lbIdx=-1;document.body.style.overflow=""}
+function closeLb(fromBack){
+  $("lb").hidden=true;lbIdx=-1;document.body.style.overflow="";
+  if(lbPushed){
+    lbPushed=false;
+    /* 뒤로 가기로 닫힌 경우엔 이미 기록이 소비됐으므로 되돌리지 않습니다 */
+    if(!fromBack){try{history.back()}catch(e){}}
+  }
+}
 function stepLb(d){
   if(lbIdx<0)return;
   var n=lbIdx+d;
@@ -1017,6 +1032,11 @@ function connect(){
   chan=sb.channel("board",{config:{presence:{key:uid()}}});
   chan.on("postgres_changes",{event:"INSERT",schema:"public",table:"photos"},function(p){onInsert(p.new)});
   chan.on("postgres_changes",{event:"DELETE",schema:"public",table:"photos"},function(p){onRemove(p.old)});
+  /* 카테고리·폴더 이동은 UPDATE 로 들어옵니다 — 어느 쪽으로 옮겼는지 따지지 않고 다시 읽습니다 */
+  chan.on("postgres_changes",{event:"UPDATE",schema:"public",table:"photos"},function(){
+    if(view==="cat"&&cat)loadCat().then(renderCat);
+    else if(view==="home")loadHome();
+  });
   chan.on("postgres_changes",{event:"*",schema:"public",table:"comments"},function(p){
     var row=p.new||p.old;
     if(lbIdx>=0&&row&&lbList[lbIdx]&&lbList[lbIdx].id===row.photo_id)loadComments(row.photo_id);
@@ -1154,6 +1174,11 @@ function wire(){
       toast(catOf(p.cat).name+" 대표 사진으로 지정했습니다");
     });
   };
+  $("sel-cat").onclick=function(e){catMenu(e.currentTarget,sel.slice())};
+  $("lb-cat").onclick=function(e){
+    if(lbIdx<0)return;
+    catMenu(e.currentTarget,[lbList[lbIdx].id]);
+  };
   $("lb-dl").onclick=function(){if(lbIdx>=0)download(lbList[lbIdx])};
   $("lb-del").onclick=function(){
     if(lbIdx<0)return;
@@ -1200,7 +1225,15 @@ function wire(){
     if(view!=="cat")return;
     clearTimeout(t);t=setTimeout(renderGrid,140);
   });
-  window.addEventListener("hashchange",route);
+  window.addEventListener("hashchange",function(){
+    if(!$("lb").hidden)closeLb(true);
+    route();
+  });
+
+  /* 휴대폰 뒤로 가기 — 크게 보기가 열려 있으면 앱을 나가지 않고 그것만 닫습니다 */
+  window.addEventListener("popstate",function(){
+    if(!$("lb").hidden)closeLb(true);
+  });
 
   /* 탭을 오래 백그라운드에 두면 실시간 연결이 끊겨 화면이 낡을 수 있습니다.
      다시 돌아왔을 때 한 번 새로 읽어 맞춥니다. */
@@ -1209,6 +1242,36 @@ function wire(){
     if(!$("lb").hidden)return;          /* 사진을 크게 보는 중에는 건드리지 않음 */
     if(view==="cat"&&cat)loadCat().then(renderCat);
     else if(view==="home")loadHome();
+  });
+}
+/* 사진을 다른 카테고리로 옮깁니다.
+   폴더는 카테고리에 속하므로, 옮길 때 폴더 지정은 함께 비웁니다. */
+function catMenu(anchor,ids){
+  closeMenu();
+  var m=el("div","menu");m.id="fmenu";
+  CATS.forEach(function(c){
+    if(c.slug===cat)return;
+    var b=el("button");
+    b.textContent=c.name;
+    b.onclick=function(){closeMenu();moveToCat(ids,c.slug)};
+    m.appendChild(b);
+  });
+  document.body.appendChild(m);
+  var r=anchor.getBoundingClientRect();
+  m.style.left=Math.min(r.left,innerWidth-180)+"px";
+  var top=r.top-m.offsetHeight-8;
+  m.style.top=(top<8?r.bottom+8:top)+"px";
+  setTimeout(function(){document.addEventListener("click",closeMenu,{once:true})},0);
+}
+function moveToCat(ids,slug){
+  if(!ids.length)return;
+  sb.from("photos").update({cat:slug,folder:null}).in("id",ids).then(function(r){
+    if(r.error){toast("옮기지 못했습니다");return}
+    photos=photos.filter(function(p){return ids.indexOf(p.id)<0});
+    if(!$("lb").hidden)closeLb();
+    clearSel();
+    renderCat();
+    toast(ids.length+"장을 "+catOf(slug).name+" 으로 옮겼습니다");
   });
 }
 function moveTo(fid){
