@@ -111,9 +111,14 @@ input{font:inherit}
 .cat .lb .n{transition:color .16s}
 .cat:hover .lb .n{color:var(--accent)}
 .cat .thumb .none{font-size:11px;color:var(--ink35);letter-spacing:.04em}
-.cat .lb{display:flex;align-items:baseline;gap:8px;margin-top:10px;flex-wrap:wrap}
-.cat .lb .n{font-family:var(--script);font-size:22px;font-weight:400;letter-spacing:.01em;line-height:1.25}
-.cat .lb .c{font-size:11.5px;font-weight:500;color:var(--ink60);font-variant-numeric:tabular-nums}
+/* 라벨은 절대 두 줄이 되지 않게 합니다 —
+   한 카드만 접혀도 같은 행 전체가 높아져 카드 높이가 어긋납니다 */
+.cat .lb{display:flex;align-items:baseline;gap:8px;margin-top:10px;flex-wrap:nowrap;min-width:0}
+.cat .lb .n{
+  font-family:var(--script);font-size:22px;font-weight:400;letter-spacing:.01em;line-height:1.25;
+  min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.cat .lb .c{font-size:11.5px;font-weight:500;color:var(--ink60);font-variant-numeric:tabular-nums;flex:none}
 
 .slider{display:none;justify-content:center;padding-bottom:30px}
 .slider .trk{width:200px;height:1px;background:var(--line);position:relative}
@@ -271,7 +276,8 @@ input{font:inherit}
 /* ---------- responsive ---------- */
 @media (max-width:1279px){
   .strip{
-    grid-template-columns:repeat(6,minmax(170px,1fr));
+    /* 185px — 가장 긴 라벨이 잘리지 않는 최소 폭 */
+    grid-template-columns:repeat(6,minmax(185px,1fr));
     overflow-x:auto;scrollbar-width:none;
   }
   .strip::-webkit-scrollbar{display:none}
@@ -295,7 +301,9 @@ input{font:inherit}
   #hdr nav::after{content:"";flex:none;width:4px}
   .hero{padding-block:44px 20px}
   .hero h1{white-space:normal}
+  /* 카드 폭 168px 안에 가장 긴 'Wedding Studio' 까지 한 줄로 들어가는 크기 */
   .strip{grid-template-columns:repeat(2,1fr);gap:8px;row-gap:22px}
+  .cat .lb .n{font-size:19px}
   .ctitle h2{font-size:22px}
   #lb .inner{padding-top:48px}
   #lb .stage img{max-height:56vh}
@@ -674,7 +682,7 @@ function renderChips(){
     if(folder===f.id)b.className="cur";
     b.textContent=f.name;
     b.onclick=function(){folder=f.id;clearSel();renderGrid();renderChips()};
-    if(!RO)b.oncontextmenu=function(e){e.preventDefault();folderMenu(e,f)};
+    if(!RO)bindFolderMenu(b,f);
     box.appendChild(b);
   });
 
@@ -744,12 +752,58 @@ function folderMenu(e,f){
       });
   };
   m.appendChild(r);m.appendChild(d);
-  document.body.appendChild(m);
-  m.style.left=Math.min(e.clientX,innerWidth-170)+"px";
-  m.style.top=e.clientY+"px";
-  setTimeout(function(){document.addEventListener("click",closeMenu,{once:true})},0);
+  openMenu(m,e.clientX,e.clientY);
 }
-function closeMenu(){var m=$("fmenu");if(m)m.remove()}
+
+/* 폴더 칩에 메뉴를 붙입니다 — 데스크톱은 우클릭, 휴대폰은 길게 누르기 */
+function bindFolderMenu(b,f){
+  b.oncontextmenu=function(e){e.preventDefault();folderMenu(e,f)};
+  var timer=null,moved=false,fired=false;
+  b.addEventListener("touchstart",function(e){
+    moved=false;fired=false;
+    var t=e.touches[0],x=t.clientX,y=t.clientY;
+    timer=setTimeout(function(){
+      timer=null;
+      if(moved)return;
+      fired=true;
+      folderMenu({clientX:x,clientY:y},f);
+    },500);
+  },{passive:true});
+  b.addEventListener("touchmove",function(){
+    moved=true;
+    if(timer){clearTimeout(timer);timer=null}
+  },{passive:true});
+  b.addEventListener("touchend",function(){
+    if(timer){clearTimeout(timer);timer=null}
+  },{passive:true});
+  /* 길게 눌러 메뉴를 연 뒤 따라오는 클릭이 폴더를 바꾸지 않도록 막습니다 */
+  b.addEventListener("click",function(e){
+    if(fired){e.preventDefault();e.stopPropagation();fired=false}
+  },true);
+}
+/* 메뉴 열고 닫기 —— 바깥을 누르면 닫습니다.
+   click 이 아니라 pointerdown 을 쓰는 이유: 터치에서는 길게 누른 뒤
+   이어지는 click 때문에 메뉴가 열리자마자 닫혀 버립니다. */
+function onDocDown(e){
+  var m=$("fmenu");
+  if(m&&m.contains(e.target))return;
+  closeMenu();
+}
+function openMenu(m,x,y){
+  closeMenu();
+  m.id="fmenu";
+  document.body.appendChild(m);
+  m.style.left=Math.max(8,Math.min(x,innerWidth-m.offsetWidth-8))+"px";
+  var top=y;
+  if(top+m.offsetHeight>innerHeight-8)top=Math.max(8,innerHeight-m.offsetHeight-8);
+  m.style.top=top+"px";
+  setTimeout(function(){document.addEventListener("pointerdown",onDocDown)},0);
+}
+function closeMenu(){
+  var m=$("fmenu");
+  if(m)m.remove();
+  document.removeEventListener("pointerdown",onDocDown);
+}
 
 /* ================= 저스티파이드 그리드 ================= */
 function layoutRows(items,cw,targetH,gap){
@@ -1225,11 +1279,8 @@ function wire(){
       });
     };
     m.appendChild(nf);
-    document.body.appendChild(m);
     var r=e.currentTarget.getBoundingClientRect();
-    m.style.left=Math.min(r.left,innerWidth-170)+"px";
-    m.style.top=Math.max(8,r.top-m.offsetHeight-8)+"px";
-    setTimeout(function(){document.addEventListener("click",closeMenu,{once:true})},0);
+    openMenu(m,r.left,r.top-220);
   };
 
   $("lb-close").onclick=closeLb;
@@ -1341,12 +1392,8 @@ function catMenu(anchor,ids){
     b.onclick=function(){closeMenu();moveToCat(ids,c.slug)};
     m.appendChild(b);
   });
-  document.body.appendChild(m);
   var r=anchor.getBoundingClientRect();
-  m.style.left=Math.min(r.left,innerWidth-180)+"px";
-  var top=r.top-m.offsetHeight-8;
-  m.style.top=(top<8?r.bottom+8:top)+"px";
-  setTimeout(function(){document.addEventListener("click",closeMenu,{once:true})},0);
+  openMenu(m,r.left,r.top-220);
 }
 function moveToCat(ids,slug){
   if(!ids.length)return;
