@@ -33,11 +33,13 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
+/* clip 은 hidden 과 달리 스크롤 컨테이너를 만들지 않습니다.
+   body 에 overflow-x:hidden 을 걸면 일부 휴대폰에서 스크롤 가속이 꺼집니다. */
+html{overflow-x:clip}
 body{
   background:var(--paper);color:var(--ink);
   font-family:var(--font);font-size:14px;line-height:1.7;
   -webkit-font-smoothing:antialiased;
-  overflow-x:hidden;
 }
 img{max-width:100%;display:block}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
@@ -106,7 +108,10 @@ input{font:inherit}
   aspect-ratio:3/4;background:var(--ph);position:relative;overflow:hidden;
   display:grid;place-items:center;
 }
-.cat .thumb img{width:100%;height:100%;object-fit:cover;transition:filter .16s}
+/* filter 를 transition 목록에 두면 휴대폰에서도 이미지가 별도 레이어로 올라가
+   메모리를 먹습니다. 호버가 있는 기기에서만 켭니다. */
+.cat .thumb img{width:100%;height:100%;object-fit:cover}
+@media (hover:hover){.cat .thumb img{transition:filter .16s}}
 .cat:hover .thumb img{filter:brightness(.96)}
 .cat .lb .n{transition:color .16s}
 .cat:hover .lb .n{color:var(--accent)}
@@ -170,7 +175,8 @@ input{font:inherit}
 #grid{padding-bottom:80px}
 .row{display:flex;gap:18px;margin-bottom:18px}
 .tile{position:relative;background:var(--ph);overflow:hidden;flex:none}
-.tile img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .28s ease-out,filter .16s}
+.tile img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .28s ease-out}
+@media (hover:hover){.tile img{transition:opacity .28s ease-out,filter .16s}}
 .tile img.on{opacity:1}
 /* 호버 효과는 마우스가 있는 기기에만 —
    터치 기기에서는 탭할 때마다 호버 상태가 걸려 불필요하게 다시 그립니다 */
