@@ -430,6 +430,12 @@ var covers={};   /* {카테고리: 대표 사진 id} — 비어 있으면 최신
    제3자에게 보낼 링크: .../?view   (닉네임을 묻지 않고, 편집 수단이 모두 숨겨집니다) */
 var RO=/[?&]view\b/.test(location.search);
 
+/* 테스트 모드 — 주소에 ?test 가 붙으면 업로더 이름이 __test__ 로 고정됩니다.
+   닉네임을 묻지 않고, localStorage 에도 쓰지 않아 실제 사용자 설정을 건드리지 않습니다.
+   정리할 때는 uploader = '__test__' / who = '__test__' 인 것만 골라 지웁니다. */
+var TEST_NAME="__test__";
+var TEST=/[?&]test\b/.test(location.search);
+
 /* ================= 유틸 ================= */
 function $(id){return document.getElementById(id)}
 function el(tag,cls){var e=document.createElement(tag);if(cls)e.className=cls;return e}
@@ -1240,6 +1246,10 @@ if(!window.supabase||!window.supabase.createClient){
     document.body.classList.add("ro");
     me="";
     start();                    /* 닉네임을 묻지 않고 바로 사진을 보여줍니다 */
+  }
+  else if(TEST){
+    me=TEST_NAME;               /* localStorage 에 쓰지 않습니다 */
+    start();
   }
   else if(me){start()}
   else{
