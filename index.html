@@ -306,6 +306,10 @@ input{font:inherit}
   /* 카드 폭 168px 안에 가장 긴 'Wedding Studio' 까지 한 줄로 들어가는 크기 */
   .strip{grid-template-columns:repeat(2,1fr);gap:8px;row-gap:22px}
   .cat .lb .n{font-size:19px}
+  /* 제목 줄과 버튼 줄을 항상 나눕니다 —
+     제목 길이에 따라 어떤 카테고리는 1줄, 어떤 건 2줄이 되는 것을 막습니다 */
+  .ctitle{flex-direction:column;align-items:flex-start;gap:14px;padding-block:24px 12px}
+  .ctitle .r{width:100%}
   .ctitle h2{font-size:22px}
   #lb .inner{padding-top:48px}
   #lb .stage img{max-height:56vh}
