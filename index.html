@@ -172,7 +172,12 @@ input{font:inherit}
 .tile{position:relative;background:var(--ph);overflow:hidden;flex:none}
 .tile img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .28s ease-out,filter .16s}
 .tile img.on{opacity:1}
-.tile:hover img{filter:brightness(.96)}
+/* 호버 효과는 마우스가 있는 기기에만 —
+   터치 기기에서는 탭할 때마다 호버 상태가 걸려 불필요하게 다시 그립니다 */
+@media (hover:hover){
+  .tile:hover img{filter:brightness(.96)}
+  .tile:hover .cap{opacity:1}
+}
 .tile.live{outline:1px solid var(--live);outline-offset:-1px}
 .tile .cap{
   position:absolute;left:0;right:0;bottom:0;padding:7px 9px;
@@ -180,7 +185,6 @@ input{font:inherit}
   background:rgba(17,17,17,.42);opacity:0;transition:opacity .16s;
   pointer-events:none;
 }
-.tile:hover .cap{opacity:1}
 .tile .pick{
   position:absolute;top:8px;left:8px;width:16px;height:16px;
   border:1px solid rgba(255,255,255,.9);background:rgba(17,17,17,.25);
@@ -307,6 +311,9 @@ input{font:inherit}
   /* 카드 폭 168px 안에 가장 긴 'Wedding Studio' 까지 한 줄로 들어가는 크기 */
   .strip{grid-template-columns:repeat(2,1fr);gap:8px;row-gap:22px}
   .cat .lb .n{font-size:19px}
+  /* 화면 밖 사진은 그리지도 않습니다 — 스크롤이 길어질수록 차이가 큽니다.
+     타일에 aspect-ratio 가 있어 높이가 미리 정해지므로 스크롤이 튀지 않습니다 */
+  .tile{content-visibility:auto;contain-intrinsic-size:auto 300px}
   /* 제목 줄과 버튼 줄을 항상 나눕니다 —
      제목 길이에 따라 어떤 카테고리는 1줄, 어떤 건 2줄이 되는 것을 막습니다 */
   .ctitle{flex-direction:column;align-items:flex-start;gap:14px;padding-block:24px 12px}
@@ -466,6 +473,10 @@ var BUCKET       = "photos";
 
 var MAX_EDGE = 2400;            /* 올릴 때 긴 변을 이 크기로 줄입니다 */
 var JPEG_Q   = 0.88;
+/* 목록용 작은 사본 —— 타일은 길어도 330px 인데 2400px 원본을 디코딩하면
+   휴대폰 스크롤이 끊깁니다. 고해상도 화면(2배)까지 감당할 800px 로 따로 저장합니다. */
+var THUMB_EDGE = 800;
+var THUMB_Q    = 0.82;
 var MAX_FILE = 15 * 1024 * 1024;
 var PER_BATCH = 10;
 
@@ -534,6 +545,7 @@ function personColor(name){
   return peopleColors[name]||"#A5A5A0";
 }
 function publicUrl(path){return SUPABASE_URL+"/storage/v1/object/public/"+BUCKET+"/"+path}
+function thumbPath(id){return id+"_t.jpg"}
 function when(ts){
   var t=new Date(ts).getTime();
   var d=(Date.now()-t)/1000;
@@ -870,7 +882,6 @@ function targetHeight(){
 function renderGrid(){
   var g=$("grid");
   g.innerHTML="";
-  if(io){io.disconnect();io=null}
   var list=visible();
   lbList=list;
 
@@ -882,19 +893,6 @@ function renderGrid(){
     g.appendChild(e);
     return;
   }
-
-  io=new IntersectionObserver(function(ents){
-    ents.forEach(function(en){
-      if(!en.isIntersecting)return;
-      var t=en.target;
-      io.unobserve(t);
-      var img=t.querySelector("img");
-      if(img&&!img.src){
-        img.src=t.dataset.url;
-        img.onload=function(){img.classList.add("on")};
-      }
-    });
-  },{rootMargin:"300px 0px"});
 
   var cw=g.clientWidth||(innerWidth-52);
   var gap=18,mobile=innerWidth<768;
@@ -946,6 +944,21 @@ function tile(p){
 
   var img=el("img");
   img.alt=catOf(p.cat).name+" 카테고리 사진, "+p.uploader+" 업로드";
+  /* 브라우저 기본 기능에 맡깁니다 —
+     loading=lazy 는 화면 밖 사진을 알아서 미루고,
+     decoding=async 는 디코딩이 스크롤을 붙잡지 않게 합니다.
+     (IntersectionObserver 로 직접 하던 것은 콜백이 오지 않는 환경이 있어 걷어냈습니다) */
+  img.loading="lazy";
+  img.decoding="async";
+  img.onload=function(){img.classList.add("on")};
+  /* 작은 사본이 없는 옛 사진은 원본으로 대체합니다 */
+  img.onerror=function(){
+    if(img.dataset.fb)return;
+    img.dataset.fb="1";
+    img.src=publicUrl(p.path);
+  };
+  img.src=publicUrl(thumbPath(p.id));
+  if(img.complete&&img.naturalWidth)img.classList.add("on");
   t.appendChild(img);
 
   var cap=el("div","cap");
@@ -965,7 +978,6 @@ function tile(p){
     if(!RO&&(picking||sel.length)){toggleSel(p.id,t);return}
     openLb(lbList.indexOf(p));
   };
-  if(io)io.observe(t);
   return t;
 }
 
@@ -1005,7 +1017,72 @@ function syncSel(){
 }
 
 /* ================= 업로드 ================= */
-function processImage(file){
+/* ===== 사진 줄이기 =====
+   원본이 4000픽셀급이면 줄이는 계산이 무겁습니다. 그걸 화면 그리는 스레드에서 하면
+   올리는 동안 화면이 멈춥니다. 그래서 별도 스레드(Worker)로 넘기고,
+   한 번 디코딩한 것으로 큰 사본과 작은 사본을 함께 만듭니다(디코딩 1회).
+   Worker 를 쓸 수 없는 브라우저에서는 아래 예전 방식으로 내려갑니다. */
+var canWorker=!!(window.Worker&&window.OffscreenCanvas&&typeof createImageBitmap==="function");
+var resizeWorker=null;
+function getWorker(){
+  if(!canWorker)return null;
+  if(resizeWorker)return resizeWorker;
+  var src=[
+    "self.onmessage=function(e){",
+    "  var d=e.data;",
+    "  function render(bmp,edge,q){",
+    "    var s=Math.min(1,edge/Math.max(bmp.width,bmp.height));",
+    "    var w=Math.max(1,Math.round(bmp.width*s)),h=Math.max(1,Math.round(bmp.height*s));",
+    "    var cv=new OffscreenCanvas(w,h);",
+    "    cv.getContext('2d').drawImage(bmp,0,0,w,h);",
+    "    return cv.convertToBlob({type:'image/jpeg',quality:q});",
+    "  }",
+    "  createImageBitmap(d.file).then(function(bmp){",
+    "    var ratio=bmp.width/bmp.height;",
+    "    return render(bmp,d.maxEdge,d.q).then(function(main){",
+    "      return render(bmp,d.thumbEdge,d.thumbQ).then(function(thumb){",
+    "        if(bmp.close)bmp.close();",
+    "        self.postMessage({ok:true,ratio:ratio,main:main,thumb:thumb});",
+    "      });",
+    "    });",
+    "  }).catch(function(err){self.postMessage({ok:false})});",
+    "};"
+  ].join("\n");
+  try{
+    resizeWorker=new Worker(URL.createObjectURL(new Blob([src],{type:"text/javascript"})));
+  }catch(e){canWorker=false;resizeWorker=null}
+  return resizeWorker;
+}
+/* 파일 하나 → {ratio, main, thumb}. 실패하면 null */
+function prepare(file){
+  var w=getWorker();
+  if(!w)return prepareOnMainThread(file);
+  return new Promise(function(res){
+    var done=false;
+    var timer=setTimeout(function(){if(!done){done=true;res(null)}},30000);
+    w.onmessage=function(e){
+      if(done)return;
+      done=true;clearTimeout(timer);
+      var d=e.data;
+      res(d&&d.ok?{ratio:d.ratio,main:d.main,thumb:d.thumb}:null);
+    };
+    w.onerror=function(){if(!done){done=true;clearTimeout(timer);canWorker=false;res(null)}};
+    w.postMessage({file:file,maxEdge:MAX_EDGE,q:JPEG_Q,thumbEdge:THUMB_EDGE,thumbQ:THUMB_Q});
+  }).then(function(r){
+    return r?r:prepareOnMainThread(file);   /* Worker 가 못 하면 예전 방식으로 */
+  });
+}
+function prepareOnMainThread(file){
+  return processImage(file,MAX_EDGE,JPEG_Q).then(function(m){
+    if(!m)return null;
+    return processImage(file,THUMB_EDGE,THUMB_Q).then(function(t){
+      return {ratio:m.ratio,main:m.blob,thumb:t?t.blob:null};
+    });
+  });
+}
+function processImage(file,maxEdge,quality){
+  maxEdge=maxEdge||MAX_EDGE;
+  quality=quality||JPEG_Q;
   return new Promise(function(res){
     var url=URL.createObjectURL(file);
     var im=new Image();
@@ -1013,7 +1090,7 @@ function processImage(file){
       var w=im.naturalWidth,h=im.naturalHeight;
       if(!w||!h){URL.revokeObjectURL(url);res(null);return}
       var ratio=w/h;
-      var scale=Math.min(1,MAX_EDGE/Math.max(w,h));
+      var scale=Math.min(1,maxEdge/Math.max(w,h));
       var cw=Math.max(1,Math.round(w*scale)),ch=Math.max(1,Math.round(h*scale));
       var c=document.createElement("canvas");
       c.width=cw;c.height=ch;
@@ -1021,7 +1098,7 @@ function processImage(file){
       c.toBlob(function(b){
         URL.revokeObjectURL(url);
         res(b?{blob:b,ratio:ratio}:null);
-      },"image/jpeg",JPEG_Q);
+      },"image/jpeg",quality);
     };
     im.onerror=function(){URL.revokeObjectURL(url);res(null)};
     im.src=url;
@@ -1041,25 +1118,37 @@ function handleFiles(files){
   if(!good.length)return;
 
   var targetCat=cat,targetFolder=folder;
-  var chain=Promise.resolve(),failed=0,undecodable=0;
+  var batch=good.slice(0,PER_BATCH);
+  var chain=Promise.resolve(),failed=0,undecodable=0,done=0;
 
-  good.slice(0,PER_BATCH).forEach(function(f){
+  if(batch.length>1)toast(batch.length+"장 올리는 중…");
+
+  batch.forEach(function(f){
     chain=chain.then(function(){
-      return processImage(f).then(function(d){
+      return prepare(f).then(function(d){
         if(!d){undecodable++;return}
         var id=uid(),path=id+".jpg";
-        return sb.storage.from(BUCKET).upload(path,d.blob,{contentType:"image/jpeg"})
+        return sb.storage.from(BUCKET).upload(path,d.main,{contentType:"image/jpeg"})
           .then(function(up){
             if(up.error)throw up.error;
+            /* 목록용 작은 사본 — 실패해도 원본으로 대체되니 막지 않습니다 */
+            if(!d.thumb)return;
+            return sb.storage.from(BUCKET)
+              .upload(thumbPath(id),d.thumb,{contentType:"image/jpeg"})
+              .catch(function(){});
+          })
+          .then(function(){
             /* created_at 을 직접 넣습니다 — 서버 기본값에만 맡기면
                방금 올린 사진의 시간이 내 화면에서 NaN 으로 보입니다 */
             var rec={id:id,cat:targetCat,folder:targetFolder,name:f.name,ratio:d.ratio,path:path,uploader:me,created_at:new Date().toISOString()};
             return sb.from("photos").insert(rec).then(function(ins){
               if(ins.error)throw ins.error;
+              done++;
               if(view==="cat"&&cat===targetCat&&!byId(id)){
                 photos.unshift(rec);
                 renderCat();
               }
+              if(batch.length>1&&done<batch.length)toast(done+" / "+batch.length+"장 올림");
             });
           })
           .catch(function(){failed++});
@@ -1070,6 +1159,7 @@ function handleFiles(files){
   chain.then(function(){
     if(undecodable)toast(undecodable+"장은 이 브라우저가 열 수 없는 형식입니다 (아이폰 HEIC 등)");
     else if(failed)toast(failed+"장을 올리지 못했습니다. 다시 시도해 주세요");
+    else if(batch.length>1)toast(batch.length+"장 올렸습니다");
   });
 }
 

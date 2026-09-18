@@ -118,10 +118,14 @@ create policy "sel" on storage.objects for select to anon using (bucket_id = 'ph
 보드는 **실제로 쓰이는 중**입니다. 사용자: **혜림 · 은서** (2026-09-18 기준 사진 8장).
 
 - 테스트는 **`?test`** 로 접속합니다 → 업로더 이름이 `__test__` 로 고정되고, 저장된 닉네임을 건드리지 않습니다
-- 정리는 **`__test__` 로 표시된 것만**:
+- 정리는 **`__test__` 로 표시된 것만**. 사진마다 **파일이 2개**(`<id>.jpg` 원본 + `<id>_t.jpg` 목록용 사본)이니 둘 다 지워야 합니다:
   ```js
-  sb.from('photos').delete().eq('uploader','__test__')
-  sb.from('comments').delete().eq('who','__test__')
+  const mine = await sb.from('photos').select('id,path').like('uploader','__test__%');
+  const paths = [];
+  mine.data.forEach(p => { paths.push(p.path); paths.push(p.id + '_t.jpg'); });
+  await sb.storage.from('photos').remove(paths);
+  await sb.from('photos').delete().like('uploader','__test__%');
+  await sb.from('comments').delete().like('who','__test__%');
   ```
 - **절대 하지 말 것**: `delete().neq('id','')` 같은 전체 삭제, `storage.list()` 결과 전부 삭제
 - 지우기 전에 "지울 것 / 남길 것"을 먼저 뽑아 확인하세요
@@ -135,7 +139,8 @@ create policy "sel" on storage.objects for select to anon using (bucket_id = 'ph
 | 쓸 수 있는 사람 | **`혜림` · `은서` 두 이름만** (`index.html` 의 `ALLOWED`) | 다른 이름은 첫 화면에서 막힘. **화면에서만 막는 방식** |
 | 권한 | 위 제한도 `?view` 도 우회 가능 | 서버로 막으려면 Supabase Auth 필요 |
 | 링크 붙여넣기 (OG 이미지 추출) | **미구현** | 다른 사이트를 읽으려면 서버(프록시) 필요 |
-| 사진 용량 | 긴 변 2400px / JPEG 88% 로 줄여 저장 | 1GB 한도에 1500장 이상 |
+| 사진 저장 | 사진 1장 = 파일 2개. **원본** `<id>.jpg` (긴 변 2400px / q88) + **목록용 사본** `<id>_t.jpg` (긴 변 800px / q82) | 목록은 사본을, 크게 보기는 원본을 씁니다. 사본이 없으면 원본으로 자동 대체 |
+| 줄이는 위치 | **Worker(별도 스레드)** — 한 번 디코딩해 두 사본을 함께 만듭니다 | 메인 스레드에서 하면 12MP 한 장에 화면이 140ms 멈춥니다. Worker 를 못 쓰는 브라우저는 예전 방식으로 내려갑니다 |
 | HEIC | PC 크롬에서 못 읽음 | 아이폰 사파리에서는 정상 |
 | 무료 플랜 정지 | 7일 무활동 시 Supabase가 쉬어감 | 대시보드에서 버튼 한 번으로 복구 |
 
