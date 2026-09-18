@@ -29,13 +29,16 @@
   --script:"Parisienne","Snell Roundhand","Apple Chancery",cursive;
   color-scheme:light;
   padding-top:env(safe-area-inset-top,0px);
-  padding-bottom:env(safe-area-inset-bottom,0px);
+  /* padding-bottom 에 safe-area 를 쓰지 않습니다 —
+     iOS 사파리는 아래 툴바가 접힐 때 이 값이 바뀝니다. 문서 전체 높이가 그때마다
+     달라져 스크롤 중 화면이 깜빡입니다. 하단 여백이 필요한 고정 바(#selbar)가
+     자기 패딩으로 직접 처리합니다. */
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
-/* clip 은 hidden 과 달리 스크롤 컨테이너를 만들지 않습니다.
-   body 에 overflow-x:hidden 을 걸면 일부 휴대폰에서 스크롤 가속이 꺼집니다. */
-html{overflow-x:clip}
+/* 가로 넘침을 막는 속성은 두지 않습니다 —
+   실제로 넘치는 요소가 없고(홈·카테고리·크게보기 모두 확인),
+   html/body 의 overflow 는 iOS 사파리에서 관성 스크롤을 방해할 수 있습니다. */
 body{
   background:var(--paper);color:var(--ink);
   font-family:var(--font);font-size:14px;line-height:1.7;
@@ -172,7 +175,8 @@ input{font:inherit}
 }
 .chips .err{font-size:11px;color:var(--ink60);align-self:center}
 
-#grid{padding-bottom:80px}
+/* 하단 안전영역 + 선택 바 자리를 여기서 확보합니다 (문서 높이는 고정) */
+#grid{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
 .row{display:flex;gap:18px;margin-bottom:18px}
 .tile{position:relative;background:var(--ph);overflow:hidden;flex:none}
 .tile img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .28s ease-out}
@@ -317,9 +321,11 @@ input{font:inherit}
   /* 카드 폭 168px 안에 가장 긴 'Wedding Studio' 까지 한 줄로 들어가는 크기 */
   .strip{grid-template-columns:repeat(2,1fr);gap:8px;row-gap:22px}
   .cat .lb .n{font-size:19px}
-  /* 화면 밖 사진은 그리지도 않습니다 — 스크롤이 길어질수록 차이가 큽니다.
-     타일에 aspect-ratio 가 있어 높이가 미리 정해지므로 스크롤이 튀지 않습니다 */
-  .tile{content-visibility:auto;contain-intrinsic-size:auto 300px}
+  /* content-visibility:auto 는 넣었다가 뺐습니다 —
+     타일이 화면에 들어올 때마다 레이아웃·페인트를 몰아서 해 스크롤이 끊겼습니다.
+     사진 수가 수백 장이 되면 다시 검토할 만하지만, 지금 규모에서는 손해입니다.
+     대신 contain 으로 각 타일의 페인트 범위만 가둡니다(부작용 없음). */
+  .tile{contain:layout paint}
   /* 제목 줄과 버튼 줄을 항상 나눕니다 —
      제목 길이에 따라 어떤 카테고리는 1줄, 어떤 건 2줄이 되는 것을 막습니다 */
   .ctitle{flex-direction:column;align-items:flex-start;gap:14px;padding-block:24px 12px}
@@ -365,6 +371,15 @@ body.ro .ctitle{padding-bottom:14px}
   font-size:28px;line-height:1;color:var(--ink60);padding:6px 10px;z-index:2;
 }
 #zoom .close:hover{color:var(--ink)}
+
+/* ---------- 진단 화면 (?debug) ---------- */
+#dbg{
+  position:fixed;left:8px;bottom:8px;z-index:95;
+  background:rgba(17,17,17,.88);color:#fff;
+  font:11px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+  padding:8px 10px;border-radius:8px;max-width:calc(100vw - 16px);
+  white-space:pre;pointer-events:none;
+}
 
 /* ---------- 알림 ---------- */
 #toast{
@@ -502,6 +517,8 @@ var photos=[], folders=[], picking=false, sel=[], lbIdx=-1, lbList=[];
 var io=null, chan=null, warnedStorage=false;
 var covers={};   /* {카테고리: 대표 사진 id} — 비어 있으면 최신 1장이 자동으로 대표 */
 var lbPushed=false;    /* 크게 보기를 열 때 쌓은 방문 기록이 있는지 */
+/* 마우스가 없는 기기 — 호버 전용 장식을 아예 만들지 않기 위해 씁니다 */
+var TOUCH=(function(){try{return matchMedia("(hover:none)").matches}catch(e){return false}})();
 var zoomPushed=false;  /* 전체 화면을 열 때 쌓은 방문 기록이 있는지 */
 
 /* 보기 전용 모드 — 주소에 ?view 가 붙으면 켜집니다.
@@ -560,6 +577,49 @@ function when(ts){
   if(d<86400)return Math.floor(d/3600)+"시간 전";
   var x=new Date(t);
   return x.getFullYear()+"."+String(x.getMonth()+1).padStart(2,"0")+"."+String(x.getDate()).padStart(2,"0");
+}
+/* ===== 진단 (?debug) =====
+   아이폰에서 깜빡임·되돌아감의 원인을 숫자로 보기 위한 임시 화면입니다.
+   무엇이 문서 높이를 바꾸는지, 누가 다시 그리는지, 스크롤이 언제 튀는지 셉니다. */
+var DEBUG=/[?&]debug\b/.test(location.search);
+var dbgState={resizeW:0,resizeH:0,heightChange:0,render:0,jumpUp:0,lastH:0,maxJump:0};
+function dbg(what){
+  if(!DEBUG)return;
+  if(what==="renderGrid")dbgState.render++;
+  dbgPaint();
+}
+function dbgPaint(){
+  var el2=document.getElementById("dbg");
+  if(!el2)return;
+  var s=dbgState;
+  el2.textContent=
+    "폭변경 "+s.resizeW+"  높이변경 "+s.resizeH+"\n"+
+    "문서높이 바뀜 "+s.heightChange+"  다시그림 "+s.render+"\n"+
+    "위로 튐 "+s.jumpUp+"  최대 "+s.maxJump+"px\n"+
+    "vw "+innerWidth+"  vh "+innerHeight+"  doc "+document.documentElement.scrollHeight;
+}
+function dbgStart(){
+  if(!DEBUG)return;
+  var box=document.createElement("div");
+  box.id="dbg";
+  document.body.appendChild(box);
+  var w=innerWidth,h=innerHeight,lastY=0;
+  dbgState.lastH=document.documentElement.scrollHeight;
+  addEventListener("resize",function(){
+    if(innerWidth!==w){dbgState.resizeW++;w=innerWidth}
+    if(innerHeight!==h){dbgState.resizeH++;h=innerHeight}
+    dbgPaint();
+  });
+  addEventListener("scroll",function(){
+    var y=window.pageYOffset||document.documentElement.scrollTop||0;
+    var dh=document.documentElement.scrollHeight;
+    if(dh!==dbgState.lastH){dbgState.heightChange++;dbgState.lastH=dh}
+    var up=lastY-y;
+    if(up>24){dbgState.jumpUp++;if(up>dbgState.maxJump)dbgState.maxJump=Math.round(up)}
+    lastY=y;
+    dbgPaint();
+  },{passive:true});
+  setInterval(dbgPaint,1000);
 }
 function toast(msg){
   var b=$("toast");
@@ -895,6 +955,9 @@ function targetHeight(){
 }
 function renderGrid(){
   var g=$("grid");
+  /* 다시 그릴 때 보던 위치를 잃지 않도록 스크롤을 되돌려 놓습니다 */
+  var keepY=window.pageYOffset||document.documentElement.scrollTop||0;
+  dbg("renderGrid");
   g.innerHTML="";
   var list=visible();
   lbList=list;
@@ -913,6 +976,7 @@ function renderGrid(){
 
   if(mobile){
     /* 2열 고정 그리드 — 좁은 폭에서는 저스티파이드가 널뜀 */
+    var _restore=true;
     var cols=[[],[]],hs=[0,0];
     list.forEach(function(p){
       var k=hs[0]<=hs[1]?0:1;
@@ -935,6 +999,7 @@ function renderGrid(){
       row.appendChild(c);
     });
     g.appendChild(row);
+    restoreY(keepY);
     return;
   }
 
@@ -948,6 +1013,14 @@ function renderGrid(){
     });
     g.appendChild(row);
   });
+  restoreY(keepY);
+}
+/* 다시 그린 뒤 스크롤 위치를 복원합니다 (위로 튀는 것을 막는 안전장치) */
+function restoreY(y){
+  if(!y)return;
+  var now=window.pageYOffset||document.documentElement.scrollTop||0;
+  if(Math.abs(now-y)<2)return;
+  window.scrollTo(0,y);
 }
 function tile(p){
   var t=el("div","tile");
@@ -975,9 +1048,13 @@ function tile(p){
   if(img.complete&&img.naturalWidth)img.classList.add("on");
   t.appendChild(img);
 
-  var cap=el("div","cap");
-  cap.textContent="["+p.uploader+" · "+when(p.created_at)+"]";
-  t.appendChild(cap);
+  /* 캡션은 마우스를 올렸을 때만 보이는 요소입니다.
+     터치 기기에서는 쓰이지도 않으면서 사진마다 반투명 레이어를 하나씩 더 만듭니다. */
+  if(!TOUCH){
+    var cap=el("div","cap");
+    cap.textContent="["+p.uploader+" · "+when(p.created_at)+"]";
+    t.appendChild(cap);
+  }
 
   var who=el("div","who");
   who.style.background=personColor(p.uploader);
@@ -1580,8 +1657,14 @@ function wire(){
     if(fs.length)handleFiles(fs);
   });
 
-  var t=null;
+  /* 가로 폭이 바뀔 때만 다시 그립니다.
+     휴대폰에서 아래로 스크롤하면 주소창이 숨으면서 '높이만' 바뀌는데,
+     그때마다 그리드를 다시 그리면 사진이 처음부터 다시 나타나고(깜빡임)
+     높이가 흔들려 스크롤이 맨 위로 되돌아갑니다. */
+  var t=null,lastW=innerWidth;
   window.addEventListener("resize",function(){
+    if(innerWidth===lastW)return;      /* 높이만 바뀐 경우 — 무시 */
+    lastW=innerWidth;
     if(view!=="cat")return;
     clearTimeout(t);t=setTimeout(renderGrid,140);
   });
@@ -1645,6 +1728,7 @@ function moveTo(fid){
 /* ================= 시작 ================= */
 function start(){
   $("gate").hidden=true;
+  dbgStart();
   renderHeader();
   connect();
   route();
