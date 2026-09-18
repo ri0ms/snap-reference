@@ -274,6 +274,7 @@ input{font:inherit}
 #gate .f{display:flex;gap:12px;justify-content:center;align-items:baseline}
 #gate input{border:0;border-bottom:1px solid var(--ink);background:none;outline:none;font-size:16px;width:170px;text-align:center;padding-bottom:6px}
 #gate button{font-size:13px;border-bottom:1px solid var(--ink);padding-bottom:2px}
+#gate .err{margin:22px 0 0;font-size:12.5px;line-height:1.7;color:var(--ink60);max-width:30ch;margin-inline:auto}
 
 /* ---------- responsive ---------- */
 @media (max-width:1279px){
@@ -439,6 +440,7 @@ body.ro .ctitle{padding-bottom:14px}
     <input id="gate-in" placeholder="닉네임" maxlength="12" autocomplete="off">
     <button id="gate-go">시작</button>
   </div>
+  <p class="err" id="gate-err" hidden></p>
 </div>
 
 <div id="zoom" hidden>
@@ -495,6 +497,13 @@ var RO=/[?&]view\b/.test(location.search);
 var TEST_NAME="__test__";
 var TEST=/[?&]test\b/.test(location.search);
 
+/* 쓸 수 있는 사람 —— 이 목록에 없는 이름으로는 들어올 수 없습니다.
+   화면에서 막는 방식이므로 개발자 도구를 다루는 사람은 우회할 수 있습니다.
+   서버로 막으려면 Supabase Auth 로 역할을 나눠야 합니다. */
+var ALLOWED=["혜림","은서"];
+/* 사람마다 고정 색 — 이름순 자동 배정보다 이 값이 우선입니다 */
+var FIXED_COLORS={"혜림":"#D63A2F","은서":"#2F8F5B"};
+
 /* ================= 유틸 ================= */
 function $(id){return document.getElementById(id)}
 function el(tag,cls){var e=document.createElement(tag);if(cls)e.className=cls;return e}
@@ -520,7 +529,10 @@ function notePeople(names){
   }
   return added;
 }
-function personColor(name){return peopleColors[name]||"#A5A5A0"}
+function personColor(name){
+  if(FIXED_COLORS[name])return FIXED_COLORS[name];
+  return peopleColors[name]||"#A5A5A0";
+}
 function publicUrl(path){return SUPABASE_URL+"/storage/v1/object/public/"+BUCKET+"/"+path}
 function when(ts){
   var t=new Date(ts).getTime();
@@ -1501,7 +1513,15 @@ function start(){
 }
 function saveName(){
   var v=$("gate-in").value.trim().slice(0,12);
+  var err=$("gate-err");
   if(!v){$("gate-in").focus();return}
+  if(ALLOWED.indexOf(v)<0){
+    err.hidden=false;
+    err.textContent="등록된 이름이 아닙니다. 이 보드를 쓰기로 한 사람만 들어올 수 있습니다.";
+    $("gate-in").select();
+    return;
+  }
+  err.hidden=true;
   me=v;
   try{localStorage.setItem("ref-me",v)}catch(e){}
   start();
@@ -1512,6 +1532,11 @@ if(!window.supabase||!window.supabase.createClient){
 }else{
   sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
   try{me=localStorage.getItem("ref-me")||""}catch(e){me=""}
+  /* 예전에 저장된 이름이 목록에서 빠졌으면 다시 묻습니다 */
+  if(me&&ALLOWED.indexOf(me)<0){
+    me="";
+    try{localStorage.removeItem("ref-me")}catch(e){}
+  }
   wire();
   if(RO){
     document.body.classList.add("ro");

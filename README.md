@@ -11,6 +11,7 @@
 | 파일 | 내용 |
 |---|---|
 | `index.html` | **제품 본체.** 의존성 없는 단일 파일 웹앱 (빌드 없음) |
+| [HANDOVER.md](HANDOVER.md) | **다른 PC·새 대화에서 이어서 작업할 때 읽는 문서** — 주소, 구조, 확정된 디자인, Supabase 스키마, 테스트 규칙 |
 | `docs.html` | 기획 문서 웹페이지 (PRD + 디자인 명세를 한 화면에) |
 | [Reference-PRD.md](Reference-PRD.md) | 제품 요구사항 — 사용자 흐름 A~F, 기능(Must 20 / Nice 12), 완료 기준 25개 |
 | [Reference-DESIGN.md](Reference-DESIGN.md) | 디자인 명세 — 원칙, 색·타이포 토큰, 화면별 규격, 저스티파이드 그리드, 반응형, 접근성 |
