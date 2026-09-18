@@ -276,6 +276,22 @@ input{font:inherit}
   #lb .inner{padding-top:48px}
   #lb .stage img{max-height:56vh}
 }
+/* ---------- 보기 전용 모드 (?view) ----------
+   편집 수단을 화면에서 전부 걷어냅니다. 서버 규칙으로 막는 것이 아니라
+   화면에서만 감추는 방식이라, 개발자 도구를 다루는 사람은 우회할 수 있습니다. */
+body.ro #btn-upload,
+body.ro #btn-pick,
+body.ro #btn-del,
+body.ro #selbar,
+body.ro #drop,
+body.ro .chips button.add,
+body.ro .tile .pick,
+body.ro #lb-cmt-block,
+body.ro #lb-cover,
+body.ro #lb-del,
+body.ro #hdr .who{display:none!important}
+body.ro .ctitle{padding-bottom:14px}
+
 /* ---------- 알림 ---------- */
 #toast{
   position:fixed;left:50%;transform:translateX(-50%);
@@ -343,10 +359,12 @@ input{font:inherit}
     <div class="side">
       <span class="where" id="lb-where"></span>
       <span class="meta" id="lb-meta"></span>
-      <hr>
-      <h3>댓글</h3>
-      <div class="cmts" id="lb-cmts"></div>
-      <div class="box"><input id="lb-input" placeholder="댓글 쓰기…" maxlength="300"><button id="lb-send">보내기</button></div>
+      <div id="lb-cmt-block">
+        <hr>
+        <h3>댓글</h3>
+        <div class="cmts" id="lb-cmts"></div>
+        <div class="box"><input id="lb-input" placeholder="댓글 쓰기…" maxlength="300"><button id="lb-send">보내기</button></div>
+      </div>
       <hr>
       <div class="acts"><button id="lb-cover">대표로 지정</button><button id="lb-dl">↓ 다운로드</button><button id="lb-del">삭제</button></div>
     </div>
@@ -399,6 +417,10 @@ var photos=[], folders=[], picking=false, sel=[], lbIdx=-1, lbList=[];
 var io=null, chan=null, warnedStorage=false;
 var covers={};   /* {카테고리: 대표 사진 id} — 비어 있으면 최신 1장이 자동으로 대표 */
 
+/* 보기 전용 모드 — 주소에 ?view 가 붙으면 켜집니다.
+   제3자에게 보낼 링크: .../?view   (닉네임을 묻지 않고, 편집 수단이 모두 숨겨집니다) */
+var RO=/[?&]view\b/.test(location.search);
+
 /* ================= 유틸 ================= */
 function $(id){return document.getElementById(id)}
 function el(tag,cls){var e=document.createElement(tag);if(cls)e.className=cls;return e}
@@ -440,7 +462,7 @@ function renderHeader(){
 function renderPeers(){
   var box=$("who");
   box.innerHTML="";
-  if(!chan)return;
+  if(RO||!chan)return;   /* 보기 전용 방문자에게는 참여자 이름을 보여주지 않습니다 */
   var st={};
   try{st=chan.presenceState()||{}}catch(e){return}
   var names=[];
@@ -555,7 +577,7 @@ function renderChips(){
     if(folder===f.id)b.className="cur";
     b.textContent=f.name;
     b.onclick=function(){folder=f.id;clearSel();renderGrid();renderChips()};
-    b.oncontextmenu=function(e){e.preventDefault();folderMenu(e,f)};
+    if(!RO)b.oncontextmenu=function(e){e.preventDefault();folderMenu(e,f)};
     box.appendChild(b);
   });
 
@@ -739,7 +761,7 @@ function tile(p){
   t.appendChild(pick);
 
   t.onclick=function(){
-    if(picking||sel.length){toggleSel(p.id,t);return}
+    if(!RO&&(picking||sel.length)){toggleSel(p.id,t);return}
     openLb(lbList.indexOf(p));
   };
   if(io)io.observe(t);
@@ -804,6 +826,7 @@ function processImage(file){
   });
 }
 function handleFiles(files){
+  if(RO)return;
   var arr=Array.prototype.slice.call(files);
   var tooBig=false,notImage=false;
   var good=arr.filter(function(f){
@@ -861,6 +884,7 @@ function openLb(i){
   $("lb-where").textContent=catOf(p.cat).name+(f?" · "+f.name:"");
   $("lb-meta").textContent="["+p.uploader+" · "+when(p.created_at)+"]";
   $("lb-cmts").innerHTML="";
+  if(RO)return;                 /* 보기 전용에서는 내부 대화(댓글)를 노출하지 않습니다 */
   syncCoverBtn(p);
   loadComments(p.id);
 }
@@ -970,7 +994,8 @@ function connect(){
   });
   chan.on("presence",{event:"sync"},renderPeers);
   chan.subscribe(function(status){
-    if(status==="SUBSCRIBED")chan.track({name:me});
+    /* 보기 전용 방문자는 참여자로 잡히지 않습니다 (실시간 갱신은 그대로 받습니다) */
+    if(status==="SUBSCRIBED"&&!RO)chan.track({name:me});
   });
 }
 function onInsert(row){
@@ -1116,7 +1141,7 @@ function wire(){
 
   var depth=0;
   window.addEventListener("dragenter",function(e){
-    if(view!=="cat")return;
+    if(RO||view!=="cat")return;
     e.preventDefault();depth++;
     var f=folder?folders.filter(function(x){return x.id===folder})[0]:null;
     $("drop-where").textContent="["+catOf(cat).name+(f?" · "+f.name:"")+"]";
@@ -1130,7 +1155,7 @@ function wire(){
     if(e.dataTransfer&&e.dataTransfer.files.length)handleFiles(e.dataTransfer.files);
   });
   window.addEventListener("paste",function(e){
-    if(view!=="cat"||!e.clipboardData)return;
+    if(RO||view!=="cat"||!e.clipboardData)return;
     var fs=[];
     Array.prototype.forEach.call(e.clipboardData.items,function(it){
       if(it.kind==="file"){var f=it.getAsFile();if(f)fs.push(f)}
@@ -1185,7 +1210,12 @@ if(!window.supabase||!window.supabase.createClient){
   sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
   try{me=localStorage.getItem("ref-me")||""}catch(e){me=""}
   wire();
-  if(me){start()}
+  if(RO){
+    document.body.classList.add("ro");
+    me="";
+    start();                    /* 닉네임을 묻지 않고 바로 사진을 보여줍니다 */
+  }
+  else if(me){start()}
   else{
     $("gate-go").onclick=saveName;
     $("gate-in").onkeydown=function(e){if(e.key==="Enter"&&!e.isComposing)saveName()};
