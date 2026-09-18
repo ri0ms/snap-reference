@@ -471,6 +471,7 @@ function toast(msg){
 /* ================= 헤더 ================= */
 function renderHeader(){
   var nav=$("nav");
+  var keep=nav.scrollLeft;   /* 다시 그려도 보던 위치에서 이어지도록 */
   nav.innerHTML="";
   if(view==="cat"){
     CATS.forEach(function(c){
@@ -480,14 +481,19 @@ function renderHeader(){
       b.onclick=function(){goCat(c.slug)};
       nav.appendChild(b);
     });
+    nav.scrollLeft=keep;
     centerTab();
-    /* 필기체 웹폰트가 늦게 도착하면 탭 너비가 달라집니다 — 한 번 더 맞춥니다 */
-    setTimeout(centerTab,120);
+    /* 필기체 웹폰트가 늦게 도착하면 탭 너비가 달라집니다 — 조용히 한 번 더 맞춥니다 */
+    setTimeout(function(){centerTab(true)},260);
   }
 }
 /* 선택된 탭을 탭 줄의 가운데로 끌어옵니다.
    휴대폰에서 뒤쪽 카테고리를 누르려고 손으로 미는 수고를 없앱니다. */
-function centerTab(){
+/* 선택한 탭을 탭 줄 가운데로 부드럽게 옮깁니다.
+   CSS scroll-behavior 나 scrollTo({behavior:"smooth"}) 는 환경에 따라
+   아예 움직이지 않는 경우가 있어, 타이머로 직접 그립니다. */
+var tabAnim=null;
+function centerTab(instant){
   var nav=$("nav");
   if(!nav)return;
   var b=nav.querySelector("button.cur");
@@ -497,8 +503,22 @@ function centerTab(){
   /* offsetLeft 는 #hdr 기준이라 쓸 수 없습니다 — 화면 좌표로 직접 구합니다 */
   var nr=nav.getBoundingClientRect(),br=b.getBoundingClientRect();
   var inner=br.left-nr.left+nav.scrollLeft;
-  var target=inner-(nav.clientWidth-br.width)/2;
-  nav.scrollLeft=Math.max(0,Math.min(target,max));
+  var target=Math.max(0,Math.min(inner-(nav.clientWidth-br.width)/2,max));
+  var from=nav.scrollLeft;
+
+  if(tabAnim){clearInterval(tabAnim);tabAnim=null}
+
+  var reduce=false;
+  try{reduce=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}
+  if(instant||reduce||Math.abs(target-from)<2){nav.scrollLeft=target;return}
+
+  var t0=Date.now(),dur=320;
+  tabAnim=setInterval(function(){
+    var k=Math.min(1,(Date.now()-t0)/dur);
+    var e=1-Math.pow(1-k,3);          /* 빠르게 출발해 부드럽게 멈춤 */
+    nav.scrollLeft=from+(target-from)*e;
+    if(k>=1){clearInterval(tabAnim);tabAnim=null}
+  },16);
 }
 function renderPeers(){
   var box=$("who");
