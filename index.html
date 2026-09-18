@@ -686,7 +686,15 @@ function renderHome(byCat,total){
       var img=el("img");
       img.alt=c.name+" 대표 사진";
       img.loading="lazy";
-      img.src=publicUrl(info.cover.path);
+      img.decoding="async";
+      /* 카드도 목록용 작은 사본을 씁니다 — 168px 칸에 원본을 넣으면
+         홈에서 스크롤할 때 휴대폰이 사진마다 큰 디코딩을 합니다 */
+      img.onerror=function(){
+        if(img.dataset.fb)return;
+        img.dataset.fb="1";
+        img.src=publicUrl(info.cover.path);
+      };
+      img.src=publicUrl(thumbPath(info.cover.id));
       th.appendChild(img);
     }
     b.appendChild(th);
@@ -1240,6 +1248,29 @@ function openZoom(){
     try{history.pushState({zoom:1},"",location.href);zoomPushed=true}catch(e){}
   }
 }
+/* 좌우로 쓸어 넘기기.
+   세로로 더 많이 움직였으면 스크롤로 보고 무시합니다. */
+function bindSwipe(el,onLeft,onRight,allow){
+  if(!el)return;
+  var x0=0,y0=0,t0=0,live=false;
+  el.addEventListener("touchstart",function(e){
+    live=false;
+    if(allow&&!allow())return;
+    if(e.touches.length!==1)return;
+    live=true;x0=e.touches[0].clientX;y0=e.touches[0].clientY;t0=Date.now();
+  },{passive:true});
+  el.addEventListener("touchend",function(e){
+    if(!live)return;
+    live=false;
+    var t=e.changedTouches&&e.changedTouches[0];
+    if(!t)return;
+    var dx=t.clientX-x0,dy=t.clientY-y0;
+    if(Date.now()-t0>700)return;          /* 천천히 끌었으면 스크롤 */
+    if(Math.abs(dx)<50)return;            /* 너무 짧으면 탭으로 봅니다 */
+    if(Math.abs(dx)<Math.abs(dy)*1.2)return;
+    if(dx<0)onLeft();else onRight();
+  },{passive:true});
+}
 function closeZoom(fromBack){
   $("zoom").hidden=true;
   $("zoom").classList.remove("mag");
@@ -1251,6 +1282,8 @@ function closeZoom(fromBack){
 }
 function closeLb(fromBack){
   $("lb").hidden=true;lbIdx=-1;document.body.style.overflow="";
+  /* 닫을 때 비웁니다 — 안 비우면 큰 사진이 메모리에 남고, 닫힌 뒤에도 옛 주소가 보입니다 */
+  $("lb-img").removeAttribute("src");
   if(lbPushed){
     lbPushed=false;
     /* 뒤로 가기로 닫힌 경우엔 이미 기록이 소비됐으므로 되돌리지 않습니다 */
@@ -1481,6 +1514,16 @@ function wire(){
     removePhotos([p.id]).then(function(){closeLb();renderCat()});
   };
   $("lb").onclick=function(e){if(e.target===$("lb"))closeLb()};
+
+  /* 크게 보기 — 사진 영역을 좌우로 쓸면 다음/이전 사진 */
+  bindSwipe(document.querySelector("#lb .stage"),
+    function(){stepLb(1)},
+    function(){stepLb(-1)});
+  /* 전체 화면 — 2배 확대 상태에서는 밀어서 보는 동작이라 넘기지 않습니다 */
+  bindSwipe($("zoom"),
+    function(){stepLb(1);openZoom()},
+    function(){stepLb(-1);openZoom()},
+    function(){return !$("zoom").classList.contains("mag")});
 
   /* 사진을 한 번 더 누르면 전체 화면 */
   $("lb-img").onclick=openZoom;
