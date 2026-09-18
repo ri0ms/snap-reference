@@ -1144,6 +1144,15 @@ function wire(){
     clearTimeout(t);t=setTimeout(renderGrid,140);
   });
   window.addEventListener("hashchange",route);
+
+  /* 탭을 오래 백그라운드에 두면 실시간 연결이 끊겨 화면이 낡을 수 있습니다.
+     다시 돌아왔을 때 한 번 새로 읽어 맞춥니다. */
+  document.addEventListener("visibilitychange",function(){
+    if(document.hidden)return;
+    if(!$("lb").hidden)return;          /* 사진을 크게 보는 중에는 건드리지 않음 */
+    if(view==="cat"&&cat)loadCat().then(renderCat);
+    else if(view==="home")loadHome();
+  });
 }
 function moveTo(fid){
   if(!sel.length)return;
